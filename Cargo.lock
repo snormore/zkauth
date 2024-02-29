@@ -707,20 +707,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "protobuf"
-version = "0.1.0"
-dependencies = [
- "pbjson",
- "prost",
- "serde",
- "tonic",
-]
-
-[[package]]
-name = "prover"
-version = "0.1.0"
-
-[[package]]
 name = "quote"
 version = "1.0.35"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1067,21 +1053,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "711b9620af191e0cdc7468a8d14e709c3dcdb115b36f838e601583af800a370a"
 
 [[package]]
-name = "verifier"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "clap",
- "dotenvy",
- "env_logger",
- "log",
- "protobuf",
- "tokio",
- "tokio-stream",
- "tonic",
-]
-
-[[package]]
 name = "want"
 version = "0.3.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1227,3 +1198,32 @@ name = "windows_x86_64_msvc"
 version = "0.52.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "32b752e52a2da0ddfbdbcc6fceadfeede4c939ed16d13e648833a61dfb611ed8"
+
+[[package]]
+name = "zkpauthctl"
+version = "0.1.0"
+
+[[package]]
+name = "zkpauthd"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "clap",
+ "dotenvy",
+ "env_logger",
+ "log",
+ "tokio",
+ "tokio-stream",
+ "tonic",
+ "zkpauthpb",
+]
+
+[[package]]
+name = "zkpauthpb"
+version = "0.1.0"
+dependencies = [
+ "pbjson",
+ "prost",
+ "serde",
+ "tonic",
+]

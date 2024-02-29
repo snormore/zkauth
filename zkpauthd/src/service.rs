@@ -1,9 +1,9 @@
-use protobuf::{
+use tonic::{Request, Response, Status};
+use zkpauthpb::{
     auth_server::Auth, AuthenticationAnswerRequest, AuthenticationAnswerResponse,
     AuthenticationChallengeRequest, AuthenticationChallengeResponse, RegisterRequest,
     RegisterResponse,
 };
-use tonic::{Request, Response, Status};
 
 pub struct Service {}
 

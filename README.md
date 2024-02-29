@@ -5,5 +5,5 @@ ZKP protocol for authentication
 # TODO
 
 - `brew install buf`
-- `( cd protobuf && scripts/generate )`
-- Clean up protobuf crate generation and features
+- `( cd zkpauthpb && scripts/generate )`
+- Clean up zkpauthpb crate generation and features

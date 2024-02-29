@@ -1,10 +1,10 @@
 use anyhow::Result;
 use clap::Parser;
 use env_logger::Env;
-use protobuf::auth_server::AuthServer;
 use tokio::net::TcpListener;
 use tonic::transport::Server;
-use verifier::Service;
+use zkpauthd::Service;
+use zkpauthpb::auth_server::AuthServer;
 
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]

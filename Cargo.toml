@@ -1,6 +1,6 @@
 [workspace]
 
-members = ["prover", "verifier", "protobuf"]
+members = ["zkpauthctl", "zkpauthd", "zkpauthpb"]
 
 exclude = []
 
