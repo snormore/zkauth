@@ -1,5 +1,5 @@
 use tonic::{Request, Response, Status};
-use zkpauthpb::{
+use zkpauthpb::v1::{
     auth_server::Auth, AuthenticationAnswerRequest, AuthenticationAnswerResponse,
     AuthenticationChallengeRequest, AuthenticationChallengeResponse, RegisterRequest,
     RegisterResponse,
@@ -10,6 +10,12 @@ pub struct Service {}
 impl Service {
     pub fn new() -> Self {
         Self {}
+    }
+}
+
+impl Default for Service {
+    fn default() -> Self {
+        Self::new()
     }
 }
 

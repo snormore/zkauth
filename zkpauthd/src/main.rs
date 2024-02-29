@@ -4,7 +4,7 @@ use env_logger::Env;
 use tokio::net::TcpListener;
 use tonic::transport::Server;
 use zkpauthd::Service;
-use zkpauthpb::auth_server::AuthServer;
+use zkpauthpb::v1::auth_server::AuthServer;
 
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]

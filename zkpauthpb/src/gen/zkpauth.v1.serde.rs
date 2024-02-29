@@ -13,7 +13,7 @@ impl serde::Serialize for AuthenticationAnswerRequest {
         if self.s != 0 {
             len += 1;
         }
-        let mut struct_ser = serializer.serialize_struct("zkp_auth.AuthenticationAnswerRequest", len)?;
+        let mut struct_ser = serializer.serialize_struct("zkpauth.v1.AuthenticationAnswerRequest", len)?;
         if !self.auth_id.is_empty() {
             struct_ser.serialize_field("authId", &self.auth_id)?;
         }
@@ -75,7 +75,7 @@ impl<'de> serde::Deserialize<'de> for AuthenticationAnswerRequest {
             type Value = AuthenticationAnswerRequest;
 
             fn expecting(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-                formatter.write_str("struct zkp_auth.AuthenticationAnswerRequest")
+                formatter.write_str("struct zkpauth.v1.AuthenticationAnswerRequest")
             }
 
             fn visit_map<V>(self, mut map_: V) -> std::result::Result<AuthenticationAnswerRequest, V::Error>
@@ -108,7 +108,7 @@ impl<'de> serde::Deserialize<'de> for AuthenticationAnswerRequest {
                 })
             }
         }
-        deserializer.deserialize_struct("zkp_auth.AuthenticationAnswerRequest", FIELDS, GeneratedVisitor)
+        deserializer.deserialize_struct("zkpauth.v1.AuthenticationAnswerRequest", FIELDS, GeneratedVisitor)
     }
 }
 impl serde::Serialize for AuthenticationAnswerResponse {
@@ -122,7 +122,7 @@ impl serde::Serialize for AuthenticationAnswerResponse {
         if !self.session_id.is_empty() {
             len += 1;
         }
-        let mut struct_ser = serializer.serialize_struct("zkp_auth.AuthenticationAnswerResponse", len)?;
+        let mut struct_ser = serializer.serialize_struct("zkpauth.v1.AuthenticationAnswerResponse", len)?;
         if !self.session_id.is_empty() {
             struct_ser.serialize_field("sessionId", &self.session_id)?;
         }
@@ -177,7 +177,7 @@ impl<'de> serde::Deserialize<'de> for AuthenticationAnswerResponse {
             type Value = AuthenticationAnswerResponse;
 
             fn expecting(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-                formatter.write_str("struct zkp_auth.AuthenticationAnswerResponse")
+                formatter.write_str("struct zkpauth.v1.AuthenticationAnswerResponse")
             }
 
             fn visit_map<V>(self, mut map_: V) -> std::result::Result<AuthenticationAnswerResponse, V::Error>
@@ -200,7 +200,7 @@ impl<'de> serde::Deserialize<'de> for AuthenticationAnswerResponse {
                 })
             }
         }
-        deserializer.deserialize_struct("zkp_auth.AuthenticationAnswerResponse", FIELDS, GeneratedVisitor)
+        deserializer.deserialize_struct("zkpauth.v1.AuthenticationAnswerResponse", FIELDS, GeneratedVisitor)
     }
 }
 impl serde::Serialize for AuthenticationChallengeRequest {
@@ -220,7 +220,7 @@ impl serde::Serialize for AuthenticationChallengeRequest {
         if self.r2 != 0 {
             len += 1;
         }
-        let mut struct_ser = serializer.serialize_struct("zkp_auth.AuthenticationChallengeRequest", len)?;
+        let mut struct_ser = serializer.serialize_struct("zkpauth.v1.AuthenticationChallengeRequest", len)?;
         if !self.user.is_empty() {
             struct_ser.serialize_field("user", &self.user)?;
         }
@@ -288,7 +288,7 @@ impl<'de> serde::Deserialize<'de> for AuthenticationChallengeRequest {
             type Value = AuthenticationChallengeRequest;
 
             fn expecting(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-                formatter.write_str("struct zkp_auth.AuthenticationChallengeRequest")
+                formatter.write_str("struct zkpauth.v1.AuthenticationChallengeRequest")
             }
 
             fn visit_map<V>(self, mut map_: V) -> std::result::Result<AuthenticationChallengeRequest, V::Error>
@@ -331,7 +331,7 @@ impl<'de> serde::Deserialize<'de> for AuthenticationChallengeRequest {
                 })
             }
         }
-        deserializer.deserialize_struct("zkp_auth.AuthenticationChallengeRequest", FIELDS, GeneratedVisitor)
+        deserializer.deserialize_struct("zkpauth.v1.AuthenticationChallengeRequest", FIELDS, GeneratedVisitor)
     }
 }
 impl serde::Serialize for AuthenticationChallengeResponse {
@@ -348,7 +348,7 @@ impl serde::Serialize for AuthenticationChallengeResponse {
         if self.c != 0 {
             len += 1;
         }
-        let mut struct_ser = serializer.serialize_struct("zkp_auth.AuthenticationChallengeResponse", len)?;
+        let mut struct_ser = serializer.serialize_struct("zkpauth.v1.AuthenticationChallengeResponse", len)?;
         if !self.auth_id.is_empty() {
             struct_ser.serialize_field("authId", &self.auth_id)?;
         }
@@ -410,7 +410,7 @@ impl<'de> serde::Deserialize<'de> for AuthenticationChallengeResponse {
             type Value = AuthenticationChallengeResponse;
 
             fn expecting(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-                formatter.write_str("struct zkp_auth.AuthenticationChallengeResponse")
+                formatter.write_str("struct zkpauth.v1.AuthenticationChallengeResponse")
             }
 
             fn visit_map<V>(self, mut map_: V) -> std::result::Result<AuthenticationChallengeResponse, V::Error>
@@ -443,7 +443,7 @@ impl<'de> serde::Deserialize<'de> for AuthenticationChallengeResponse {
                 })
             }
         }
-        deserializer.deserialize_struct("zkp_auth.AuthenticationChallengeResponse", FIELDS, GeneratedVisitor)
+        deserializer.deserialize_struct("zkpauth.v1.AuthenticationChallengeResponse", FIELDS, GeneratedVisitor)
     }
 }
 impl serde::Serialize for RegisterRequest {
@@ -463,7 +463,7 @@ impl serde::Serialize for RegisterRequest {
         if self.y2 != 0 {
             len += 1;
         }
-        let mut struct_ser = serializer.serialize_struct("zkp_auth.RegisterRequest", len)?;
+        let mut struct_ser = serializer.serialize_struct("zkpauth.v1.RegisterRequest", len)?;
         if !self.user.is_empty() {
             struct_ser.serialize_field("user", &self.user)?;
         }
@@ -531,7 +531,7 @@ impl<'de> serde::Deserialize<'de> for RegisterRequest {
             type Value = RegisterRequest;
 
             fn expecting(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-                formatter.write_str("struct zkp_auth.RegisterRequest")
+                formatter.write_str("struct zkpauth.v1.RegisterRequest")
             }
 
             fn visit_map<V>(self, mut map_: V) -> std::result::Result<RegisterRequest, V::Error>
@@ -574,7 +574,7 @@ impl<'de> serde::Deserialize<'de> for RegisterRequest {
                 })
             }
         }
-        deserializer.deserialize_struct("zkp_auth.RegisterRequest", FIELDS, GeneratedVisitor)
+        deserializer.deserialize_struct("zkpauth.v1.RegisterRequest", FIELDS, GeneratedVisitor)
     }
 }
 impl serde::Serialize for RegisterResponse {
@@ -585,7 +585,7 @@ impl serde::Serialize for RegisterResponse {
     {
         use serde::ser::SerializeStruct;
         let len = 0;
-        let struct_ser = serializer.serialize_struct("zkp_auth.RegisterResponse", len)?;
+        let struct_ser = serializer.serialize_struct("zkpauth.v1.RegisterResponse", len)?;
         struct_ser.end()
     }
 }
@@ -631,7 +631,7 @@ impl<'de> serde::Deserialize<'de> for RegisterResponse {
             type Value = RegisterResponse;
 
             fn expecting(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-                formatter.write_str("struct zkp_auth.RegisterResponse")
+                formatter.write_str("struct zkpauth.v1.RegisterResponse")
             }
 
             fn visit_map<V>(self, mut map_: V) -> std::result::Result<RegisterResponse, V::Error>
@@ -645,6 +645,6 @@ impl<'de> serde::Deserialize<'de> for RegisterResponse {
                 })
             }
         }
-        deserializer.deserialize_struct("zkp_auth.RegisterResponse", FIELDS, GeneratedVisitor)
+        deserializer.deserialize_struct("zkpauth.v1.RegisterResponse", FIELDS, GeneratedVisitor)
     }
 }

@@ -12,4 +12,6 @@ serde = "1.0.197"
 tonic = "0.11.0"
 
 [features]
-default = []
+default = ["zkpauth-v1"]
+full = ["zkpauth-v1"]
+"zkpauth-v1" = []
