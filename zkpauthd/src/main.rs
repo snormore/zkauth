@@ -1,5 +1,6 @@
 use anyhow::Result;
 use clap::Parser;
+use clap_verbosity_flag::{InfoLevel, Verbosity};
 use env_logger::Env;
 use tokio::net::TcpListener;
 use tonic::transport::Server;
@@ -9,6 +10,9 @@ use zkpauthpb::v1::auth_server::AuthServer;
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
 pub struct Options {
+    #[command(flatten)]
+    verbose: Verbosity<InfoLevel>,
+
     /// Specifies the IP address or name of the host to which the server is bound.
     #[arg(short, long, default_value = "127.0.0.1")]
     bind: String,
@@ -18,13 +22,22 @@ pub struct Options {
     port: u16,
 }
 
+impl Options {
+    fn init_logger(&self) {
+        if self.verbose.is_present() {
+            env_logger::Builder::new()
+                .filter_level(self.verbose.log_level_filter())
+                .init();
+        } else {
+            env_logger::Builder::from_env(Env::default().default_filter_or("info")).init();
+        }
+    }
+}
+
 #[tokio::main]
 async fn main() -> Result<()> {
     let opts = Options::parse();
-    // dotenv().ok();
-    // TODO: use this or remove it
-
-    init_logger();
+    opts.init_logger();
 
     let addr = format!("{}:{}", opts.bind, opts.port);
     let listener = TcpListener::bind(addr).await?;
@@ -37,8 +50,4 @@ async fn main() -> Result<()> {
         .await?;
 
     Ok(())
-}
-
-fn init_logger() {
-    env_logger::Builder::from_env(Env::default().default_filter_or("info")).init();
 }

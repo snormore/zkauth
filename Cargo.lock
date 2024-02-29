@@ -220,6 +220,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "clap-verbosity-flag"
+version = "2.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "bb9b20c0dd58e4c2e991c8d203bbeb76c11304d1011659686b5b644bc29aa478"
+dependencies = [
+ "clap",
+ "log",
+]
+
+[[package]]
 name = "clap_builder"
 version = "4.5.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1202,6 +1212,12 @@ checksum = "32b752e52a2da0ddfbdbcc6fceadfeede4c939ed16d13e648833a61dfb611ed8"
 [[package]]
 name = "zkpauthctl"
 version = "0.1.0"
+dependencies = [
+ "clap",
+ "clap-verbosity-flag",
+ "env_logger",
+ "log",
+]
 
 [[package]]
 name = "zkpauthd"
@@ -1209,6 +1225,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "clap",
+ "clap-verbosity-flag",
  "dotenvy",
  "env_logger",
  "log",
