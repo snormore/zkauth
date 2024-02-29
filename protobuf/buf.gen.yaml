@@ -17,4 +17,5 @@ plugins:
   - name: prost-crate
     out: .
     opt:
+      - include_file=src/gen/mod.rs
       - gen_crate=Cargo.toml
