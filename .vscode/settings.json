@@ -1,0 +1,14 @@
+{
+    "editor.formatOnSave": true,
+    "editor.formatOnType": true,
+    "[rust]": {
+        "editor.defaultFormatter": "rust-lang.rust-analyzer",
+        "editor.formatOnSave": true,
+        "editor.formatOnSaveMode": "file"
+    },
+    "[proto3]": {
+      "editor.defaultFormatter": "bufbuild.vscode-buf",
+      "editor.formatOnSave": true
+    },
+  }
+  
