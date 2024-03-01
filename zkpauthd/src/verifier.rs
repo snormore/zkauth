@@ -13,8 +13,6 @@ use zkpauthpb::v1::{
     GetPublicParametersResponse, RegisterRequest, RegisterResponse,
 };
 
-const RANDOM_NONCE_LENGTH_BITS: u64 = 32;
-
 #[derive(Debug)]
 struct Parameters {
     p: BigInt,
@@ -82,7 +80,6 @@ impl Auth for Verifier {
         &self,
         _: Request<GetPublicParametersRequest>,
     ) -> Result<Response<GetPublicParametersResponse>, Status> {
-        // TODO: consider making this an "into" method on Parameters instead
         Ok(Response::new(GetPublicParametersResponse {
             p: self.parameters.p.to_string(),
             q: self.parameters.q.to_string(),
@@ -128,7 +125,7 @@ impl Auth for Verifier {
 
         // Generate random challenge number c.
         // Should not be negative because it's used as an exponent.
-        let c: BigUint = rng.sample(RandomBits::new(RANDOM_NONCE_LENGTH_BITS));
+        let c: BigUint = rng.sample(RandomBits::new(32));
 
         let auth_id = Uuid::new_v4().to_string();
 

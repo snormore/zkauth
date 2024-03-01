@@ -9,8 +9,6 @@ use zkpauthpb::v1::{
     GetPublicParametersRequest, RegisterRequest,
 };
 
-const RANDOM_NONCE_LENGTH_BITS: u64 = 32;
-
 pub struct Prover {
     client: AuthClient<Channel>,
     parameters: Parameters,
@@ -94,7 +92,7 @@ impl Prover {
     pub async fn login(&mut self) -> Result<(), Box<dyn std::error::Error>> {
         // Generate random number k.
         // Should not be negative because it's used as an exponent.
-        let k: BigUint = self.rng.sample(RandomBits::new(RANDOM_NONCE_LENGTH_BITS));
+        let k: BigUint = self.rng.sample(RandomBits::new(32));
         let signed_k: BigInt = k.clone().into();
 
         let p = &self.parameters.p;

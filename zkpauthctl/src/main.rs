@@ -1,3 +1,4 @@
+use anyhow::Result;
 use clap::Parser;
 use clap_verbosity_flag::{InfoLevel, Verbosity};
 use env_logger::Env;
@@ -38,4 +39,23 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     prover.login().await?;
 
     Ok(())
+}
+
+#[cfg(test)]
+mod options {
+    use super::*;
+
+    #[test]
+    fn defaults() -> Result<()> {
+        let opts = Options::parse_from(vec!["bin"]);
+        assert_eq!(opts.address, "http://127.0.0.1:50001");
+        Ok(())
+    }
+
+    #[test]
+    fn host_https_test_net_5000() -> Result<()> {
+        let opts = Options::parse_from(vec!["bin", "--address=https://test.net:5000"]);
+        assert_eq!(opts.address, "https://test.net:5000");
+        Ok(())
+    }
 }
