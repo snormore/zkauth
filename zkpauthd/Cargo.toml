@@ -17,3 +17,7 @@ env_logger = "0.11.2"
 tokio-stream = { version = "0.1.14", features = ["full"] }
 clap-verbosity-flag = "2.2.0"
 num-bigint = { version = "0.4.4", features = ["rand", "serde"] }
+rand = "0.8.5"
+uuid = { version = "1.7.0", features = ["v4", "fast-rng"] }
+dashmap = "5.5.3"
+num-traits = "0.2.18"

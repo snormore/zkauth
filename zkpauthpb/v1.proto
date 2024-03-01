@@ -3,26 +3,26 @@ package zkpauth.v1;
 
 message RegisterRequest {
   string user = 1;
-  bytes y1 = 2;
-  bytes y2 = 3;
+  string y1 = 2;
+  string y2 = 3;
 }
 
 message RegisterResponse {}
 
 message AuthenticationChallengeRequest {
   string user = 1;
-  bytes r1 = 2;
-  bytes r2 = 3;
+  string r1 = 2;
+  string r2 = 3;
 }
 
 message AuthenticationChallengeResponse {
   string auth_id = 1;
-  bytes c = 2;
+  string c = 2;
 }
 
 message AuthenticationAnswerRequest {
   string auth_id = 1;
-  bytes s = 2;
+  string s = 2;
 }
 
 message AuthenticationAnswerResponse {
@@ -32,11 +32,10 @@ message AuthenticationAnswerResponse {
 message GetPublicParametersRequest {}
 
 message GetPublicParametersResponse {
-  bytes p = 1;
-  bytes q = 2;
-  bytes g = 3;
-  bytes h = 4;
-  uint64 bit_size = 5;
+  string p = 1;
+  string q = 2;
+  string g = 3;
+  string h = 4;
 }
 
 service Auth {
