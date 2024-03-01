@@ -90,6 +90,8 @@ impl Auth for Service {
     ) -> Result<Response<RegisterResponse>, Status> {
         let request = request.into_inner();
 
+        log::info!("{:?}", request);
+
         // TODO: handle case where user already registered, if necessary
 
         // Store (user, (y1, y2)) for use in create_authentication_challenge and verify_authentication
@@ -113,8 +115,9 @@ impl Auth for Service {
         let r1 = request.r1.parse::<BigInt>().unwrap();
         let r2 = request.r2.parse::<BigInt>().unwrap();
 
+        log::info!("{:?}", request);
+
         let mut rng = rand::thread_rng();
-        // TODO: move rng to service struct
 
         // Generate random challenge number c.
         // Should not be negative because it's used as an exponent.
@@ -149,6 +152,8 @@ impl Auth for Service {
         // https://github.com/kobby-pentangeli/chaum-pedersen-zkp/blob/master/src/lib.rs#L72-L80
         let request = request.into_inner();
         let s = request.s.parse::<BigInt>().unwrap();
+
+        log::info!("{:?}", request);
 
         // Lookup (auth_id, (user, c))
         // TODO: handle error / not found
