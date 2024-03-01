@@ -1,4 +1,7 @@
+use std::time::Duration;
+
 use dashmap::DashMap;
+use moka::sync::Cache;
 use num_bigint::{BigInt, BigUint, RandomBits, ToBigInt};
 use num_traits::One;
 use rand::Rng;
@@ -21,13 +24,13 @@ struct Parameters {
 }
 
 #[derive(Debug)]
-struct Registration {
+struct User {
     y1: BigInt,
     y2: BigInt,
 }
 
-#[derive(Debug)]
-struct Login {
+#[derive(Debug, Clone)]
+struct Challenge {
     user: String,
     c: BigUint,
     r1: BigInt,
@@ -36,9 +39,9 @@ struct Login {
 
 pub struct Verifier {
     parameters: Parameters,
-    registrations: DashMap<String, Registration>,
-    logins: DashMap<String, Login>,
-    sessions: DashMap<String, ()>,
+    users: DashMap<String, User>,
+    challenges: Cache<String, Challenge>,
+    sessions: Cache<String, ()>,
 }
 
 impl Verifier {
@@ -56,9 +59,13 @@ impl Verifier {
                 g: 4.to_bigint().unwrap(),
                 h: 9.to_bigint().unwrap(),
             },
-            registrations: DashMap::new(),
-            logins: DashMap::new(),
-            sessions: DashMap::new(),
+            users: DashMap::new(),
+            challenges: Cache::builder()
+                .time_to_live(Duration::from_secs(300))
+                .build(),
+            sessions: Cache::builder()
+                .time_to_live(Duration::from_secs(3600))
+                .build(),
         }
     }
 }
@@ -95,9 +102,9 @@ impl Auth for Verifier {
         // TODO: handle case where user already registered, if necessary
 
         // Store (user, (y1, y2)) for use in create_authentication_challenge and verify_authentication
-        self.registrations.insert(
+        self.users.insert(
             request.user,
-            Registration {
+            User {
                 y1: request.y1.parse::<BigInt>().unwrap(),
                 y2: request.y2.parse::<BigInt>().unwrap(),
             },
@@ -128,9 +135,9 @@ impl Auth for Verifier {
         // TODO: check that user is registered, otherwise return error
 
         // Store (auth_id, (user, c)) for use in verify_authentication
-        self.logins.insert(
+        self.challenges.insert(
             auth_id.clone(),
-            Login {
+            Challenge {
                 user: request.user,
                 c: c.clone(),
                 r1,
@@ -157,27 +164,25 @@ impl Auth for Verifier {
 
         // Lookup (auth_id, (user, c))
         // TODO: handle error / not found
-        let login = self.logins.get(&request.auth_id).unwrap();
-        log::info!("{:?}", login.value());
+        let challenge = self.challenges.get(&request.auth_id).unwrap();
+        log::info!("{:?}", challenge);
 
         // Lookup (user, (y1, y2))
         // TODO: handle error / not found
-        let registration = self.registrations.get(&login.user).unwrap();
-        log::info!("{:?}", registration.value());
+        let user = self.users.get(&challenge.user).unwrap();
+        log::info!("{:?}", user.value());
 
         // TODO: verify and return error if not correct
         let p = self.parameters.p.clone();
         let one = One::one();
-        let c: BigInt = login.c.clone().into();
-        let r1 =
-            (self.parameters.g.modpow(&s, &p) * registration.y1.modpow(&c, &p)).modpow(&one, &p);
-        let r2 =
-            (self.parameters.h.modpow(&s, &p) * registration.y2.modpow(&c, &p)).modpow(&one, &p);
+        let c: BigInt = challenge.c.clone().into();
+        let r1 = (self.parameters.g.modpow(&s, &p) * user.y1.modpow(&c, &p)).modpow(&one, &p);
+        let r2 = (self.parameters.h.modpow(&s, &p) * user.y2.modpow(&c, &p)).modpow(&one, &p);
 
-        // log::info!("condition1: {} == {}", r1, login.r1);
-        // log::info!("condition2: {} == {}", r2, login.r2);
+        // log::info!("condition1: {} == {}", r1, challenge.r1);
+        // log::info!("condition2: {} == {}", r2, challenge.r2);
 
-        if r1 != login.r1 || r2 != login.r2 {
+        if r1 != challenge.r1 || r2 != challenge.r2 {
             return Err(Status::failed_precondition("verification failed"));
         }
 
