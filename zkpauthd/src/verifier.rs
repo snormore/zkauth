@@ -34,14 +34,14 @@ struct Login {
     r2: BigInt,
 }
 
-pub struct Service {
+pub struct Verifier {
     parameters: Parameters,
     registrations: DashMap<String, Registration>,
     logins: DashMap<String, Login>,
     sessions: DashMap<String, ()>,
 }
 
-impl Service {
+impl Verifier {
     pub fn new() -> Self {
         Self {
             parameters: Parameters {
@@ -63,14 +63,14 @@ impl Service {
     }
 }
 
-impl Default for Service {
+impl Default for Verifier {
     fn default() -> Self {
         Self::new()
     }
 }
 
 #[tonic::async_trait]
-impl Auth for Service {
+impl Auth for Verifier {
     async fn get_public_parameters(
         &self,
         _: Request<GetPublicParametersRequest>,

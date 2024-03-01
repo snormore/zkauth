@@ -4,7 +4,7 @@ use clap_verbosity_flag::{InfoLevel, Verbosity};
 use env_logger::Env;
 use tokio::net::TcpListener;
 use tonic::transport::Server;
-use zkpauthd::Service;
+use zkpauthd::Verifier;
 use zkpauthpb::v1::auth_server::AuthServer;
 
 #[derive(Parser, Debug)]
@@ -45,7 +45,7 @@ async fn main() -> Result<()> {
     log::info!("✅ Server listening on {}", listener.local_addr()?);
 
     Server::builder()
-        .add_service(AuthServer::new(Service::new()))
+        .add_service(AuthServer::new(Verifier::new()))
         .serve_with_incoming(tokio_stream::wrappers::TcpListenerStream::new(listener))
         .await?;
 

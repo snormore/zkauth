@@ -1,4 +1,4 @@
-pub mod service;
+pub mod verifier;
 
 #[doc(inline)]
-pub use service::Service;
+pub use verifier::Verifier;
