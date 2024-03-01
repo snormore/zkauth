@@ -31,7 +31,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let opts = Options::parse();
     opts.init_logger();
 
-    let mut prover = Prover::new(opts.address, "user".to_string()).await?;
+    let mut prover = Prover::new(opts.address, "user".to_string(), "password".to_string()).await?;
 
     prover.register().await?;
 

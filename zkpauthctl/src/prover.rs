@@ -2,6 +2,7 @@ use num_bigint::{BigInt, BigUint, RandomBits};
 use num_traits::Zero;
 use rand::rngs::ThreadRng;
 use rand::Rng;
+use sha2::{Digest, Sha256};
 use tonic::transport::Channel;
 use zkpauthpb::v1::{
     auth_client::AuthClient, AuthenticationAnswerRequest, AuthenticationChallengeRequest,
@@ -9,7 +10,6 @@ use zkpauthpb::v1::{
 };
 
 const RANDOM_NONCE_LENGTH_BITS: u64 = 32;
-const RANDOM_SECRET_LENGTH_BITS: u64 = 256;
 
 pub struct Prover {
     client: AuthClient<Channel>,
@@ -28,7 +28,11 @@ struct Parameters {
 }
 
 impl Prover {
-    pub async fn new(address: String, user: String) -> Result<Self, Box<dyn std::error::Error>> {
+    pub async fn new(
+        address: String,
+        user: String,
+        password: String,
+    ) -> Result<Self, Box<dyn std::error::Error>> {
         let mut client = AuthClient::connect(address).await?;
 
         let params = client
@@ -40,11 +44,14 @@ impl Prover {
         let g = params.g.parse::<BigInt>().unwrap();
         let h = params.h.parse::<BigInt>().unwrap();
 
-        let mut rng = rand::thread_rng();
+        let rng = rand::thread_rng();
 
         // Generate random secret number x.
         // Should not be negative because it's used as an exponent.
-        let x: BigUint = rng.sample(RandomBits::new(RANDOM_SECRET_LENGTH_BITS));
+        // let x: BigUint = rng.sample(RandomBits::new(RANDOM_SECRET_LENGTH_BITS));
+
+        // Convert password string to x number.
+        let x = BigUint::from_bytes_be(&Sha256::digest(password.as_bytes()));
 
         Ok(Prover {
             client,
