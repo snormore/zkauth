@@ -66,7 +66,6 @@ impl Prover {
         let h = &self.parameters.h;
 
         // Compute y1 and y2 for registration.
-        // https://github.com/neongazer/zkp-auth-py/blob/main/zkp_auth/sigma_protocols/chaum_pedersen/prover.py#L42-L50
         let signed_x: BigInt = self.x.clone().into();
         let y1 = g.modpow(&signed_x, p);
         let y2 = h.modpow(&signed_x, p);
@@ -101,7 +100,6 @@ impl Prover {
         let h = &self.parameters.h;
 
         // Compute commitment (r1, r2) for authentication challenge.
-        // https://github.com/neongazer/zkp-auth-py/blob/main/zkp_auth/sigma_protocols/chaum_pedersen/prover.py#L52-L60
         let r1 = g.modpow(&signed_k, p);
         let r2 = h.modpow(&signed_k, p);
         log::info!("r1 = {}", r1);
@@ -123,7 +121,6 @@ impl Prover {
 
         // Compute challenge response s.
         // Should not be negative because it's used as an exponent.
-        // https://github.com/neongazer/zkp-auth-py/blob/main/zkp_auth/sigma_protocols/chaum_pedersen/prover.py#L62-L68
         let signed_x: BigInt = self.x.clone().into();
         let mut s = (signed_k - c * signed_x) % q;
         if s < Zero::zero() {

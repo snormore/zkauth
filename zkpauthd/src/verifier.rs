@@ -1,10 +1,9 @@
-use std::time::Duration;
-
 use dashmap::DashMap;
 use moka::sync::Cache;
 use num_bigint::{BigInt, BigUint, RandomBits, ToBigInt};
 use num_traits::One;
 use rand::Rng;
+use std::time::Duration;
 use tonic::{Request, Response, Status};
 use uuid::Uuid;
 use zkpauthpb::v1::{
@@ -35,11 +34,16 @@ struct Challenge {
     r2: BigInt,
 }
 
+#[derive(Debug, Clone, Copy)]
+struct Session {
+    id: Uuid,
+}
+
 pub struct Verifier {
     parameters: Parameters,
     users: DashMap<String, User>,
     challenges: Cache<String, Challenge>,
-    sessions: Cache<String, ()>,
+    sessions: Cache<String, Session>,
 }
 
 impl Verifier {
@@ -96,9 +100,12 @@ impl Auth for Verifier {
 
         log::info!("{:?}", request);
 
-        // TODO: handle case where user already registered, if necessary
+        // Return error if user is already registered.
+        if self.users.get(&request.user).is_some() {
+            return Err(Status::already_exists("User already registered"));
+        }
 
-        // Store (user, (y1, y2)) for use in create_authentication_challenge and verify_authentication
+        // Store (user, (y1, y2)) for use in create_authentication_challenge and verify_authentication.
         self.users.insert(
             request.user,
             User {
@@ -114,7 +121,6 @@ impl Auth for Verifier {
         &self,
         request: Request<AuthenticationChallengeRequest>,
     ) -> Result<Response<AuthenticationChallengeResponse>, Status> {
-        // https://github.com/neongazer/zkp-auth-py/blob/main/zkp_auth/sigma_protocols/chaum_pedersen/verifier.py#L25
         let request = request.into_inner();
         let r1 = request.r1.parse::<BigInt>().unwrap();
         let r2 = request.r2.parse::<BigInt>().unwrap();
@@ -127,11 +133,13 @@ impl Auth for Verifier {
         // Should not be negative because it's used as an exponent.
         let c: BigUint = rng.sample(RandomBits::new(32));
 
+        // Return error if user hasn't been registered.
+        if self.users.get(&request.user).is_none() {
+            return Err(Status::not_found("User not found"));
+        }
+
+        // Store (auth_id, (user, c)) for use in verify_authentication.
         let auth_id = Uuid::new_v4().to_string();
-
-        // TODO: check that user is registered, otherwise return error
-
-        // Store (auth_id, (user, c)) for use in verify_authentication
         self.challenges.insert(
             auth_id.clone(),
             Challenge {
@@ -152,43 +160,323 @@ impl Auth for Verifier {
         &self,
         request: Request<AuthenticationAnswerRequest>,
     ) -> Result<Response<AuthenticationAnswerResponse>, Status> {
-        // https://github.com/neongazer/zkp-auth-py/blob/main/zkp_auth/sigma_protocols/chaum_pedersen/verifier.py#L43-L46
-        // https://github.com/kobby-pentangeli/chaum-pedersen-zkp/blob/master/src/lib.rs#L72-L80
         let request = request.into_inner();
         let s = request.s.parse::<BigInt>().unwrap();
 
         log::info!("{:?}", request);
 
         // Lookup (auth_id, (user, c))
-        // TODO: handle error / not found
-        let challenge = self.challenges.get(&request.auth_id).unwrap();
+        let challenge = self
+            .challenges
+            .get(&request.auth_id)
+            .ok_or_else(|| Status::not_found("Challenge not found"))?;
         log::info!("{:?}", challenge);
 
         // Lookup (user, (y1, y2))
-        // TODO: handle error / not found
-        let user = self.users.get(&challenge.user).unwrap();
+        let user = self
+            .users
+            .get(&challenge.user)
+            .ok_or_else(|| Status::not_found("User not found"))?;
         log::info!("{:?}", user.value());
 
-        // TODO: verify and return error if not correct
+        // Verify and return error if not correct.
         let p = self.parameters.p.clone();
         let one = One::one();
         let c: BigInt = challenge.c.clone().into();
         let r1 = (self.parameters.g.modpow(&s, &p) * user.y1.modpow(&c, &p)).modpow(&one, &p);
         let r2 = (self.parameters.h.modpow(&s, &p) * user.y2.modpow(&c, &p)).modpow(&one, &p);
 
-        // log::info!("condition1: {} == {}", r1, challenge.r1);
-        // log::info!("condition2: {} == {}", r2, challenge.r2);
-
         if r1 != challenge.r1 || r2 != challenge.r2 {
-            return Err(Status::failed_precondition("verification failed"));
+            return Err(Status::failed_precondition("Verification failed"));
         }
 
-        // TODO: if session already exists, then return that session id instead of a new one
+        let session_key = s.to_string();
+        let session = match self.sessions.get(&session_key) {
+            None => {
+                let session = Session { id: Uuid::new_v4() };
+                self.sessions.insert(session_key, session);
+                session
+            }
+            Some(session) => session,
+        };
+        log::info!("Session: {}", session.id);
 
-        let session_id = Uuid::new_v4().to_string();
-        self.sessions.insert(session_id.clone(), ());
-        log::info!("Session: {}", session_id);
+        Ok(Response::new(AuthenticationAnswerResponse {
+            session_id: session.id.to_string(),
+        }))
+    }
+}
 
-        Ok(Response::new(AuthenticationAnswerResponse { session_id }))
+#[cfg(test)]
+mod get_public_parameters {
+    use super::*;
+    use anyhow::Result;
+
+    #[tokio::test]
+    async fn succeeds() -> Result<()> {
+        let verifier = Verifier::new();
+        let resp = verifier
+            .get_public_parameters(Request::new(GetPublicParametersRequest {}))
+            .await?
+            .into_inner();
+
+        resp.p.parse::<BigInt>()?;
+        resp.q.parse::<BigInt>()?;
+        resp.g.parse::<BigInt>()?;
+        resp.h.parse::<BigInt>()?;
+
+        Ok(())
+    }
+}
+
+#[cfg(test)]
+mod register {
+    use super::*;
+    use anyhow::Result;
+    use tonic::Code;
+
+    #[tokio::test]
+    async fn succeeds() -> Result<()> {
+        let verifier = Verifier::new();
+        let resp = verifier
+            .register(Request::new(RegisterRequest {
+                user: "peggy".to_string(),
+                y1: "1".to_string(),
+                y2: "1".to_string(),
+            }))
+            .await?
+            .into_inner();
+
+        assert_eq!(resp, RegisterResponse {});
+
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn returns_error_when_user_already_registered() -> Result<()> {
+        let verifier = Verifier::new();
+        verifier.users.insert(
+            "peggy".to_string(),
+            User {
+                y1: One::one(),
+                y2: One::one(),
+            },
+        );
+
+        let result = verifier
+            .register(Request::new(RegisterRequest {
+                user: "peggy".to_string(),
+                y1: "1".to_string(),
+                y2: "1".to_string(),
+            }))
+            .await;
+
+        let err = result.unwrap_err();
+        assert_eq!(err.code(), Code::AlreadyExists);
+        assert_eq!(err.message(), "User already registered");
+
+        Ok(())
+    }
+}
+
+#[cfg(test)]
+mod create_authentication_challenge {
+    use super::*;
+    use anyhow::Result;
+    use tonic::Code;
+
+    #[tokio::test]
+    async fn returns_not_found_when_missing_user() -> Result<()> {
+        let verifier = Verifier::new();
+        let result = verifier
+            .create_authentication_challenge(Request::new(AuthenticationChallengeRequest {
+                user: "peggy".to_string(),
+                r1: "1".to_string(),
+                r2: "1".to_string(),
+            }))
+            .await;
+
+        let err = result.unwrap_err();
+        assert_eq!(err.code(), Code::NotFound);
+        assert_eq!(err.message(), "User not found");
+
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn succeeds() -> Result<()> {
+        let verifier = Verifier::new();
+        verifier.users.insert(
+            "peggy".to_string(),
+            User {
+                y1: One::one(),
+                y2: One::one(),
+            },
+        );
+
+        let resp = verifier
+            .create_authentication_challenge(Request::new(AuthenticationChallengeRequest {
+                user: "peggy".to_string(),
+                r1: "1".to_string(),
+                r2: "1".to_string(),
+            }))
+            .await?
+            .into_inner();
+
+        Uuid::parse_str(&resp.auth_id)?;
+        resp.c.parse::<BigInt>()?;
+
+        Ok(())
+    }
+}
+
+#[cfg(test)]
+mod verify_authentication {
+    use super::*;
+    use anyhow::Result;
+    use num_traits::Zero;
+    use tonic::Code;
+
+    #[tokio::test]
+    async fn returns_not_found_when_missing_challenge() -> Result<()> {
+        let verifier = Verifier::new();
+        let result = verifier
+            .verify_authentication(Request::new(AuthenticationAnswerRequest {
+                auth_id: "".to_string(),
+                s: "1".to_string(),
+            }))
+            .await;
+
+        let err = result.unwrap_err();
+        assert_eq!(err.code(), Code::NotFound);
+        assert_eq!(err.message(), "Challenge not found");
+
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn returns_not_found_when_missing_user() -> Result<()> {
+        let verifier = Verifier::new();
+        verifier.challenges.insert(
+            "id".to_string(),
+            Challenge {
+                user: "peggy".to_string(),
+                c: One::one(),
+                r1: One::one(),
+                r2: One::one(),
+            },
+        );
+
+        let result = verifier
+            .verify_authentication(Request::new(AuthenticationAnswerRequest {
+                auth_id: "id".to_string(),
+                s: "1".to_string(),
+            }))
+            .await;
+
+        let err = result.unwrap_err();
+        assert_eq!(err.code(), Code::NotFound);
+        assert_eq!(err.message(), "User not found");
+
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn returns_verification_failed() -> Result<()> {
+        let verifier = Verifier::new();
+
+        verifier.users.insert(
+            "peggy".to_string(),
+            User {
+                y1: One::one(),
+                y2: One::one(),
+            },
+        );
+        verifier.challenges.insert(
+            "id".to_string(),
+            Challenge {
+                user: "peggy".to_string(),
+                c: One::one(),
+                r1: One::one(),
+                r2: One::one(),
+            },
+        );
+
+        let result = verifier
+            .verify_authentication(Request::new(AuthenticationAnswerRequest {
+                auth_id: "id".to_string(),
+                s: "1".to_string(),
+            }))
+            .await;
+
+        let err = result.unwrap_err();
+        assert_eq!(err.code(), Code::FailedPrecondition);
+        assert_eq!(err.message(), "Verification failed");
+
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn succeeds() -> Result<()> {
+        let verifier = Verifier::new();
+
+        let params = verifier
+            .get_public_parameters(Request::new(GetPublicParametersRequest {}))
+            .await?
+            .into_inner();
+        let p = params.p.parse::<BigInt>().unwrap();
+        let q = params.q.parse::<BigInt>().unwrap();
+        let g = params.g.parse::<BigInt>().unwrap();
+        let h = params.h.parse::<BigInt>().unwrap();
+
+        let mut rng = rand::thread_rng();
+
+        let x: BigUint = rng.sample(RandomBits::new(256));
+        let signed_x: BigInt = x.clone().into();
+        let y1 = g.modpow(&signed_x, &p);
+        let y2 = h.modpow(&signed_x, &p);
+
+        let c: BigUint = rng.sample(RandomBits::new(32));
+        let signed_c: BigInt = c.clone().into();
+        let k: BigUint = rng.sample(RandomBits::new(32));
+        let signed_k: BigInt = k.clone().into();
+        let r1 = g.modpow(&signed_k, &p);
+        let r2 = h.modpow(&signed_k, &p);
+
+        let mut s = (signed_k - signed_c * signed_x) % &q;
+        if s < Zero::zero() {
+            s += q;
+        }
+
+        let user = "peggy".to_string();
+        let auth_id = Uuid::new_v4().to_string();
+
+        verifier.users.insert(user.clone(), User { y1, y2 });
+        verifier
+            .challenges
+            .insert(auth_id.clone(), Challenge { user, c, r1, r2 });
+
+        let resp = verifier
+            .verify_authentication(Request::new(AuthenticationAnswerRequest {
+                auth_id: auth_id.clone(),
+                s: s.to_string(),
+            }))
+            .await?
+            .into_inner();
+
+        Uuid::parse_str(&resp.session_id)?;
+        let original_session_id = resp.session_id;
+
+        let resp = verifier
+            .verify_authentication(Request::new(AuthenticationAnswerRequest {
+                auth_id,
+                s: s.to_string(),
+            }))
+            .await?
+            .into_inner();
+
+        assert_eq!(resp.session_id, original_session_id);
+
+        Ok(())
     }
 }
