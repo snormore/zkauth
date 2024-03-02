@@ -1883,19 +1883,26 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "32b752e52a2da0ddfbdbcc6fceadfeede4c939ed16d13e648833a61dfb611ed8"
 
 [[package]]
-name = "zkauth-client"
+name = "zkauth-cli"
 version = "0.1.0"
 dependencies = [
  "anyhow",
  "clap",
  "clap-verbosity-flag",
  "env_logger",
+ "tokio",
+ "zkauth-client",
+]
+
+[[package]]
+name = "zkauth-client"
+version = "0.1.0"
+dependencies = [
  "log",
  "num-bigint 0.4.4",
  "num-traits",
  "rand 0.8.5",
  "sha2",
- "tokio",
  "tonic",
  "zkauth-proto",
 ]

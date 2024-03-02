@@ -6,15 +6,10 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-anyhow = "1.0.80"
-clap = { version = "4.5.1", features = ["env", "derive"] }
-clap-verbosity-flag = "2.2.0"
-env_logger = "0.11.2"
 log = "0.4.21"
 num-bigint = { version = "0.4.4", features = ["rand"] }
 num-traits = "0.2.18"
 rand = "0.8.5"
 sha2 = "0.10.8"
-tokio = { version = "1.36.0", features = ["full"] }
 tonic = "0.11.0"
 zkauth-proto = { path = "../zkauth-proto", features = ["full"] }
