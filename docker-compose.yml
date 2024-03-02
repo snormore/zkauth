@@ -1,0 +1,12 @@
+version: '3.8'
+
+services:
+  server:
+    init: true
+    build:
+      dockerfile: zkauth-server/Dockerfile
+    environment:
+      - PORT=5000
+    ports:
+      - "50001:5000"
+    restart: always
