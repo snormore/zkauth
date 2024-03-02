@@ -2053,6 +2053,7 @@ dependencies = [
  "dashmap",
  "dotenvy",
  "env_logger",
+ "futures-util",
  "log",
  "moka",
  "num-bigint 0.4.4",

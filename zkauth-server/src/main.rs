@@ -2,7 +2,10 @@ use anyhow::Result;
 use clap::Parser;
 use clap_verbosity_flag::{InfoLevel, Verbosity};
 use env_logger::Env;
+use futures_util::FutureExt;
 use tokio::net::TcpListener;
+use tokio::signal;
+use tokio::sync::oneshot;
 use tonic::transport::Server;
 use zkauth_pb::v1::auth_server::AuthServer;
 use zkauth_server::Verifier;
@@ -43,15 +46,40 @@ async fn main() -> Result<()> {
     let opts = Options::parse();
     opts.init_logger();
 
+    // Create a channel to signal shutdown.
+    let (shutdown_sender, shutdown_receiver) = oneshot::channel();
+
+    // Spawn a task to listen for termination signals.
+    let signal_task = tokio::spawn(async move {
+        // Wait for SIGINT or SIGTERM signal.
+        signal::ctrl_c()
+            .await
+            .expect("Failed to listen for ctrl_c signal");
+        shutdown_sender
+            .send(())
+            .expect("Failed to send shutdown signal");
+    });
+
+    // Server setup.
     let addr = format!("{}:{}", opts.host, opts.port);
     let listener = TcpListener::bind(addr).await?;
-
     log::info!("✅ Server listening on {}", listener.local_addr()?);
-
-    Server::builder()
+    let server = Server::builder()
         .add_service(AuthServer::new(Verifier::generated(opts.prime_bits)))
-        .serve_with_incoming(tokio_stream::wrappers::TcpListenerStream::new(listener))
-        .await?;
+        .serve_with_incoming_shutdown(
+            tokio_stream::wrappers::TcpListenerStream::new(listener),
+            shutdown_receiver.map(|_| ()),
+        );
+
+    // Run the server and wait for either completion or a shutdown signal.
+    tokio::select! {
+        _ = server => {
+            log::info!("Server has shut down.");
+        },
+        _ = signal_task => {
+            log::info!("Signal received, shutting down.");
+        },
+    }
 
     Ok(())
 }
