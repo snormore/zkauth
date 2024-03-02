@@ -4,18 +4,13 @@ ZKP protocol for authentication
 
 # TODO
 
-- `brew install buf`
-- `( cd zkpauthpb && scripts/generate )`
-- Finish off prover-side test coverage
 - Better error handling whenever )? or await? or unwrap() is used so server doesn't get killed from a panic
+- Finish off prover-side test coverage
+- Support elliptical instead of scalar https://github.com/gagiuntoli/zkp_chaum_pedersen/blob/7b0c77adf547cef2df17b42ecf49780c679d3e9a/src/lib.rs#L165
 - Add bench tests
-- Support elliptical instead of scalar
-- Fill out README
-- Generate rust docs and deploy to GH pages
 - Docker/compose for the setup
-- Use external kv store for high availability of multiple replicas of the server
 - Deploy to AWS
-
-## Places it can be extended
-
-- Use an external/shared datastore for user challenges so that the server can be deployed with multiple replicas to be highly available
+- Generate rust docs and deploy to GH pages, fill out comment docs
+- Fill out README
+- Use external kv store for high availability of multiple replicas of the server
+- Fix any remaining TODOs in comments

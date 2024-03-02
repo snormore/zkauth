@@ -1,21 +1,11 @@
 #!/bin/bash
 set -eou pipefail
 
-packages=(
-    "protoc-gen-prost"
-    "protoc-gen-prost-serde"
-    "protoc-gen-tonic"
-    "protoc-gen-prost-crate"
-)
-
-function install_package() {
-    if ! cargo install --list | grep "$1 v" > /dev/null; then
-        cargo install $1
-    fi
-}
-
-for package in "${packages[@]}"; do
-    install_package "${package}"
-done
+shopt -s expand_aliases
+if [[ "${OSTYPE}" == "darwin"* ]]; then
+    if ! which buf &>/dev/null; then brew install buf; fi
+else
+    alias buf="docker run --volume $(pwd):/workspace --workdir /workspace bufbuild/buf"
+fi
 
 buf generate
