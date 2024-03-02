@@ -30,7 +30,9 @@ pub fn generate_parameters(prime_bits: usize) -> Parameters {
         Sign::Plus,
         BigUint::from_bytes_be(&Generator::safe_prime(prime_bits).to_bytes_be()),
     );
-    let q = (&p - 1.to_bigint().unwrap()) / 2.to_bigint().unwrap();
+    let one: BigInt = One::one();
+    let two = &one + &one;
+    let q = (&p - one) / two;
 
     let g1 = generate_g(p.clone(), q.clone());
     let mut g2 = generate_g(p.clone(), q.clone());

@@ -96,6 +96,7 @@ impl Auth for Verifier {
         self.users.insert(
             request.user,
             User {
+                // TODO: validate and return error if y1,y2 not numbers instead of unwrap
                 y1: request.y1.parse::<BigInt>().unwrap(),
                 y2: request.y2.parse::<BigInt>().unwrap(),
             },
@@ -109,6 +110,7 @@ impl Auth for Verifier {
         request: Request<AuthenticationChallengeRequest>,
     ) -> Result<Response<AuthenticationChallengeResponse>, Status> {
         let request = request.into_inner();
+        // TODO: validate and return error if r1,r2 not numbers instead of unwrap
         let r1 = request.r1.parse::<BigInt>().unwrap();
         let r2 = request.r2.parse::<BigInt>().unwrap();
 
@@ -148,6 +150,7 @@ impl Auth for Verifier {
         request: Request<AuthenticationAnswerRequest>,
     ) -> Result<Response<AuthenticationAnswerResponse>, Status> {
         let request = request.into_inner();
+        // TODO: validate and return error if s not number instead of unwrap
         let s = request.s.parse::<BigInt>().unwrap();
 
         log::info!("{:?}", request);
