@@ -203,7 +203,6 @@ impl Auth for Verifier {
             }
             Some(session) => session,
         };
-        log::info!("Session: {}", session.id);
 
         Ok(Response::new(AuthenticationAnswerResponse {
             session_id: session.id.to_string(),

@@ -72,8 +72,8 @@ impl Prover {
         let signed_x: BigInt = self.x.clone().into();
         let y1 = g.modpow(&signed_x, p);
         let y2 = h.modpow(&signed_x, p);
-        log::info!("y1 = {}", y1);
-        log::info!("y2 = {}", y2);
+        log::debug!("y1 = {}", y1);
+        log::debug!("y2 = {}", y2);
 
         // Send register request.
         let resp = self
@@ -87,7 +87,7 @@ impl Prover {
             .await?
             .into_inner();
 
-        log::info!("{:?}", resp);
+        log::debug!("{:?}", resp);
 
         Ok(())
     }
@@ -107,8 +107,8 @@ impl Prover {
         // Compute commitment (r1, r2) for authentication challenge.
         let r1 = g.modpow(&signed_k, p);
         let r2 = h.modpow(&signed_k, p);
-        log::info!("r1 = {}", r1);
-        log::info!("r2 = {}", r2);
+        log::debug!("r1 = {}", r1);
+        log::debug!("r2 = {}", r2);
 
         // Send create_authentication_challenge request.
         let resp = self
@@ -123,7 +123,7 @@ impl Prover {
             .into_inner();
         let c = resp.c.parse::<BigInt>().unwrap();
 
-        log::info!("{:?}", resp);
+        log::debug!("{:?}", resp);
 
         // Compute challenge response s.
         // Should not be negative because it's used as an exponent.
@@ -132,7 +132,7 @@ impl Prover {
         if s < Zero::zero() {
             s += q;
         }
-        log::info!("s = {}", s);
+        log::debug!("s = {}", s);
 
         // Send verify_authentication request.
         let resp = self
@@ -145,7 +145,7 @@ impl Prover {
             .await?
             .into_inner();
 
-        log::info!("{:?}", resp);
+        log::debug!("{:?}", resp);
 
         Ok(())
     }
