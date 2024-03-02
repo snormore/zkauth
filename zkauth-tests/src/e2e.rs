@@ -15,7 +15,6 @@ async fn start_server_in_background() -> Result<AuthClient<Channel>> {
             .add_service(AuthServer::new(Verifier::default()))
             .serve_with_incoming(tokio_stream::wrappers::TcpListenerStream::new(listener))
             .await
-            .unwrap();
     });
 
     let client = AuthClient::connect(address).await.unwrap();

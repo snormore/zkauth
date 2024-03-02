@@ -1,6 +1,6 @@
 #[cfg(test)]
 mod main {
-    use assert_cmd::prelude::*; // Add methods on commands
+    use assert_cmd::prelude::*;
     use std::io::Read;
     use std::{
         process::{Command, Stdio},

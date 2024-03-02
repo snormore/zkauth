@@ -2,7 +2,7 @@ use anyhow::Result;
 use clap::Parser;
 use clap_verbosity_flag::{InfoLevel, Verbosity};
 use env_logger::Env;
-use zkauth_client::{prover::Prover, AuthClient};
+use zkauth_demo_cli::run;
 
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
@@ -18,11 +18,12 @@ pub struct Options {
 impl Options {
     fn init_logger(&self) {
         if self.verbose.is_present() {
-            env_logger::Builder::new()
+            let _ = env_logger::Builder::new()
                 .filter_level(self.verbose.log_level_filter())
-                .init();
+                .try_init();
         } else {
-            env_logger::Builder::from_env(Env::default().default_filter_or("info")).init();
+            let _ =
+                env_logger::Builder::from_env(Env::default().default_filter_or("info")).try_init();
         }
     }
 }
@@ -32,12 +33,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let opts = Options::parse();
     opts.init_logger();
 
-    let client = AuthClient::connect(opts.address).await?;
-    let prover = Prover::new(client, "user".to_string(), "password".to_string()).await?;
-
-    prover.register().await?;
-
-    prover.login().await?;
+    run(opts.address).await?;
 
     Ok(())
 }
@@ -57,6 +53,20 @@ mod options {
     fn host_https_test_net_5000() -> Result<()> {
         let opts = Options::parse_from(vec!["bin", "--address=https://test.net:5000"]);
         assert_eq!(opts.address, "https://test.net:5000");
+        Ok(())
+    }
+
+    #[test]
+    fn init_logger_defaults() -> Result<()> {
+        let opts = Options::parse_from(vec!["bin"]);
+        opts.init_logger();
+        Ok(())
+    }
+
+    #[test]
+    fn init_logger_verbose() -> Result<()> {
+        let opts = Options::parse_from(vec!["bin", "-v"]);
+        opts.init_logger();
         Ok(())
     }
 }
