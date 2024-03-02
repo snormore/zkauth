@@ -1550,6 +1550,7 @@ version = "0.1.40"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c3523ab5a71916ccf420eebdf5521fcef02141234bbc0b8a49f2fdc4544364ef"
 dependencies = [
+ "log",
  "pin-project-lite",
  "tracing-attributes",
  "tracing-core",
@@ -1886,12 +1887,16 @@ checksum = "32b752e52a2da0ddfbdbcc6fceadfeede4c939ed16d13e648833a61dfb611ed8"
 name = "zkauth-client"
 version = "0.1.0"
 dependencies = [
+ "anyhow",
  "log",
  "num-bigint 0.4.4",
  "num-traits",
  "rand 0.8.5",
  "sha2",
+ "tokio",
+ "tokio-stream",
  "tonic",
+ "tower",
  "zkauth-pb",
 ]
 

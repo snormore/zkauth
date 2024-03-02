@@ -17,7 +17,7 @@ pub struct Prover {
     x: BigUint,
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 struct Parameters {
     p: BigInt,
     q: BigInt,
@@ -27,11 +27,11 @@ struct Parameters {
 
 impl Prover {
     pub async fn new(
-        address: String,
+        mut client: AuthClient<Channel>,
         user: String,
         password: String,
     ) -> Result<Self, Box<dyn std::error::Error>> {
-        let mut client = AuthClient::connect(address).await?;
+        // let mut client = AuthClient::connect(address).await?;
 
         let params = client
             .get_public_parameters(GetPublicParametersRequest {})
@@ -147,14 +147,65 @@ impl Prover {
 #[cfg(test)]
 mod new {
     use super::*;
+    use crate::test::mock_client;
+    use anyhow::Result;
+    use num_traits::One;
+
+    #[tokio::test]
+    async fn succeeds() -> Result<()> {
+        let client = mock_client().await?;
+        let prover = Prover::new(client, "user".to_string(), "password".to_string())
+            .await
+            .unwrap();
+
+        assert_eq!(
+            prover.parameters,
+            Parameters {
+                p: One::one(),
+                q: One::one(),
+                g: One::one(),
+                h: One::one(),
+            }
+        );
+
+        Ok(())
+    }
+}
+
+#[cfg(test)]
+mod register {
+    use super::*;
+    use crate::test::mock_client;
     use anyhow::Result;
 
     #[tokio::test]
     async fn succeeds() -> Result<()> {
-        let prover = Prover::new(
-            "address".to_string(),
-            "user".to_string(),
-            "password".to_string(),
-        );
+        let client = mock_client().await?;
+        let mut prover = Prover::new(client, "user".to_string(), "password".to_string())
+            .await
+            .unwrap();
+
+        prover.register().await.unwrap();
+
+        Ok(())
+    }
+}
+
+#[cfg(test)]
+mod login {
+    use super::*;
+    use crate::test::mock_client;
+    use anyhow::Result;
+
+    #[tokio::test]
+    async fn succeeds() -> Result<()> {
+        let client = mock_client().await?;
+        let mut prover = Prover::new(client, "user".to_string(), "password".to_string())
+            .await
+            .unwrap();
+
+        prover.login().await.unwrap();
+
+        Ok(())
     }
 }

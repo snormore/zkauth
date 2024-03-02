@@ -108,6 +108,8 @@ impl Auth for Verifier {
         Ok(Response::new(RegisterResponse {}))
     }
 
+    /// Creates a new challenge using the given commitment, and returns c in the response along
+    /// with the challenge auth id.
     async fn create_authentication_challenge(
         &self,
         request: Request<AuthenticationChallengeRequest>,
@@ -154,6 +156,8 @@ impl Auth for Verifier {
         }))
     }
 
+    /// Verifies the given s and creates a new session based on it if necessary, returning the
+    /// session id in the response.
     async fn verify_authentication(
         &self,
         request: Request<AuthenticationAnswerRequest>,

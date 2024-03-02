@@ -2,7 +2,7 @@ use anyhow::Result;
 use clap::Parser;
 use clap_verbosity_flag::{InfoLevel, Verbosity};
 use env_logger::Env;
-use zkauth_client::prover::Prover;
+use zkauth_client::{prover::Prover, AuthClient};
 
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
@@ -32,7 +32,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let opts = Options::parse();
     opts.init_logger();
 
-    let mut prover = Prover::new(opts.address, "user".to_string(), "password".to_string()).await?;
+    let client = AuthClient::connect(opts.address).await?;
+    let mut prover = Prover::new(client, "user".to_string(), "password".to_string()).await?;
 
     prover.register().await?;
 

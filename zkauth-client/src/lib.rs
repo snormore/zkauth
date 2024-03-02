@@ -1,1 +1,7 @@
 pub mod prover;
+
+#[doc(inline)]
+pub use zkauth_pb::v1::auth_client::AuthClient;
+
+#[cfg(test)]
+mod test;
