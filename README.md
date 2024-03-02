@@ -14,10 +14,14 @@ The Chaum-Pedersen ZKP protocol is explained in [Cryptography: An Introduction](
 - Support elliptical instead of scalar https://github.com/gagiuntoli/zkp_chaum_pedersen/blob/7b0c77adf547cef2df17b42ecf49780c679d3e9a/src/lib.rs#L165
 - Docker/compose for the setup
 - Deploy to AWS
-- Generate rust docs and deploy to GH pages, fill out comment docs
-- Fill out README
 - Add bench tests
+
+- Fill out comment docs for deployed rust docs
+- Fill out README
 - Use external kv store for high availability of multiple replicas of the server
 - Fix any remaining TODOs in comments
 - Add demo web app using zkauth-client
 - Add devcontainer
+- CI pipeline for test/lint/build/release https://github.com/BamPeers/rust-ci-github-actions-workflow
+- CI pipeline for docker image https://github.com/snormore/mds/blob/main/.github/workflows/ci-image.yml
+- Release package to crates.io

@@ -143,3 +143,18 @@ impl Prover {
         Ok(())
     }
 }
+
+#[cfg(test)]
+mod new {
+    use super::*;
+    use anyhow::Result;
+
+    #[tokio::test]
+    async fn succeeds() -> Result<()> {
+        let prover = Prover::new(
+            "address".to_string(),
+            "user".to_string(),
+            "password".to_string(),
+        );
+    }
+}
