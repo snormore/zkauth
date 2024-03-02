@@ -8,8 +8,6 @@ The Chaum-Pedersen ZKP protocol is explained in [Cryptography: An Introduction](
 
 # TODO
 
-- Add github workflows for codecov, docs on gh pages, and ci-image
-- Add devcontainer
 - Finish off prover-side test coverage
 - Add integration tests
 - Add tests for multiple logins/challenges concurrently for the same user
@@ -22,3 +20,4 @@ The Chaum-Pedersen ZKP protocol is explained in [Cryptography: An Introduction](
 - Use external kv store for high availability of multiple replicas of the server
 - Fix any remaining TODOs in comments
 - Add demo web app using zkauth-client
+- Add devcontainer
