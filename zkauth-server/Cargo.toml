@@ -23,3 +23,7 @@ dashmap = "5.5.3"
 num-traits = "0.2.18"
 moka = { version = "0.12.5", features = ["future", "sync"] }
 num-primes = "0.3.0"
+
+[dev-dependencies]
+assert_cmd = "2.0.14"
+wait-timeout = "0.2.0"

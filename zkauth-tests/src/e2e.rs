@@ -1,13 +1,12 @@
 use anyhow::Result;
 use tokio::net::TcpListener;
-use tonic::transport::Server;
+use tonic::transport::{Channel, Server};
 use tonic::Code;
 use zkauth_client::{prover::Prover, AuthClient};
 use zkauth_pb::v1::auth_server::AuthServer;
 use zkauth_server::Verifier;
 
-#[tokio::test]
-async fn register_login_succeeds() -> Result<()> {
+async fn start_server_in_background() -> Result<AuthClient<Channel>> {
     let listener = TcpListener::bind("127.0.0.1:0").await.unwrap();
     let address = format!("http://{}", listener.local_addr().unwrap().to_string());
 
@@ -20,6 +19,14 @@ async fn register_login_succeeds() -> Result<()> {
     });
 
     let client = AuthClient::connect(address).await.unwrap();
+
+    Ok(client)
+}
+
+#[tokio::test]
+async fn register_login_succeeds() -> Result<()> {
+    let client = start_server_in_background().await.unwrap();
+
     let prover = Prover::new(client, "user".to_string(), "password".to_string())
         .await
         .unwrap();
@@ -32,18 +39,8 @@ async fn register_login_succeeds() -> Result<()> {
 
 #[tokio::test]
 async fn new_fails_with_empty_user() -> Result<()> {
-    let listener = TcpListener::bind("127.0.0.1:0").await.unwrap();
-    let address = format!("http://{}", listener.local_addr().unwrap().to_string());
+    let client = start_server_in_background().await.unwrap();
 
-    tokio::spawn(async move {
-        Server::builder()
-            .add_service(AuthServer::new(Verifier::default()))
-            .serve_with_incoming(tokio_stream::wrappers::TcpListenerStream::new(listener))
-            .await
-            .unwrap();
-    });
-
-    let client = AuthClient::connect(address).await.unwrap();
     let err = Prover::new(client, "".to_string(), "password".to_string())
         .await
         .unwrap_err();
@@ -55,18 +52,8 @@ async fn new_fails_with_empty_user() -> Result<()> {
 
 #[tokio::test]
 async fn new_fails_with_empty_password() -> Result<()> {
-    let listener = TcpListener::bind("127.0.0.1:0").await.unwrap();
-    let address = format!("http://{}", listener.local_addr().unwrap().to_string());
+    let client = start_server_in_background().await.unwrap();
 
-    tokio::spawn(async move {
-        Server::builder()
-            .add_service(AuthServer::new(Verifier::default()))
-            .serve_with_incoming(tokio_stream::wrappers::TcpListenerStream::new(listener))
-            .await
-            .unwrap();
-    });
-
-    let client = AuthClient::connect(address).await.unwrap();
     let err = Prover::new(client, "user".to_string(), "".to_string())
         .await
         .unwrap_err();
@@ -78,18 +65,8 @@ async fn new_fails_with_empty_password() -> Result<()> {
 
 #[tokio::test]
 async fn login_fails_when_not_registered() -> Result<()> {
-    let listener = TcpListener::bind("127.0.0.1:0").await.unwrap();
-    let address = format!("http://{}", listener.local_addr().unwrap().to_string());
+    let client = start_server_in_background().await.unwrap();
 
-    tokio::spawn(async move {
-        Server::builder()
-            .add_service(AuthServer::new(Verifier::default()))
-            .serve_with_incoming(tokio_stream::wrappers::TcpListenerStream::new(listener))
-            .await
-            .unwrap();
-    });
-
-    let client = AuthClient::connect(address).await.unwrap();
     let prover = Prover::new(client, "user".to_string(), "password".to_string())
         .await
         .unwrap();
@@ -103,18 +80,8 @@ async fn login_fails_when_not_registered() -> Result<()> {
 
 #[tokio::test]
 async fn register_twice_with_same_user_fails() -> Result<()> {
-    let listener = TcpListener::bind("127.0.0.1:0").await.unwrap();
-    let address = format!("http://{}", listener.local_addr().unwrap().to_string());
+    let client = start_server_in_background().await.unwrap();
 
-    tokio::spawn(async move {
-        Server::builder()
-            .add_service(AuthServer::new(Verifier::default()))
-            .serve_with_incoming(tokio_stream::wrappers::TcpListenerStream::new(listener))
-            .await
-            .unwrap();
-    });
-
-    let client = AuthClient::connect(address).await.unwrap();
     let prover = Prover::new(client, "user".to_string(), "password".to_string())
         .await
         .unwrap();
@@ -130,18 +97,8 @@ async fn register_twice_with_same_user_fails() -> Result<()> {
 
 #[tokio::test]
 async fn register_login_login_succeeds() -> Result<()> {
-    let listener = TcpListener::bind("127.0.0.1:0").await.unwrap();
-    let address = format!("http://{}", listener.local_addr().unwrap().to_string());
+    let client = start_server_in_background().await.unwrap();
 
-    tokio::spawn(async move {
-        Server::builder()
-            .add_service(AuthServer::new(Verifier::default()))
-            .serve_with_incoming(tokio_stream::wrappers::TcpListenerStream::new(listener))
-            .await
-            .unwrap();
-    });
-
-    let client = AuthClient::connect(address).await.unwrap();
     let prover = Prover::new(client, "user".to_string(), "password".to_string())
         .await
         .unwrap();
@@ -155,18 +112,7 @@ async fn register_login_login_succeeds() -> Result<()> {
 
 #[tokio::test]
 async fn register_login_twice_with_different_users_succeeds() -> Result<()> {
-    let listener = TcpListener::bind("127.0.0.1:0").await.unwrap();
-    let address = format!("http://{}", listener.local_addr().unwrap().to_string());
-
-    tokio::spawn(async move {
-        Server::builder()
-            .add_service(AuthServer::new(Verifier::default()))
-            .serve_with_incoming(tokio_stream::wrappers::TcpListenerStream::new(listener))
-            .await
-            .unwrap();
-    });
-
-    let client = AuthClient::connect(address).await.unwrap();
+    let client = start_server_in_background().await.unwrap();
 
     let prover1 = Prover::new(client.clone(), "user1".to_string(), "password".to_string())
         .await

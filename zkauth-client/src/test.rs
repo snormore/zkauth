@@ -27,19 +27,14 @@ pub async fn mock_client() -> Result<AuthClient<Channel>> {
     // Move client to an option so we can _move_ the inner value
     // on the first attempt to connect. All other attempts will fail.
     let mut client = Some(client);
-    let channel = Endpoint::try_from("http://[::]:50051")?
+    let channel = Endpoint::try_from("http://[::]:0")?
         .connect_with_connector(service_fn(move |_: Uri| {
             let client = client.take();
 
             async move {
-                if let Some(client) = client {
-                    Ok(client)
-                } else {
-                    Err(std::io::Error::new(
-                        std::io::ErrorKind::Other,
-                        "Client already taken",
-                    ))
-                }
+                client.ok_or_else(|| {
+                    std::io::Error::new(std::io::ErrorKind::Other, "Client already taken")
+                })
             }
         }))
         .await?;

@@ -20,6 +20,10 @@ pub struct Options {
     /// Specifies the TCP/IP port number on which the server listens for incoming client requests.
     #[arg(short, long, env("PORT"), default_value_t = 0)]
     port: u16,
+
+    /// Specifies the number of bits to use for generating prime numbers for the public parameters.
+    #[arg(long, default_value_t = 128)]
+    prime_bits: usize,
 }
 
 impl Options {
@@ -45,7 +49,7 @@ async fn main() -> Result<()> {
     log::info!("✅ Server listening on {}", listener.local_addr()?);
 
     Server::builder()
-        .add_service(AuthServer::new(Verifier::generated(256)))
+        .add_service(AuthServer::new(Verifier::generated(opts.prime_bits)))
         .serve_with_incoming(tokio_stream::wrappers::TcpListenerStream::new(listener))
         .await?;
 
@@ -61,6 +65,7 @@ mod options {
         let opts = Options::parse_from(vec!["bin"]);
         assert_eq!(opts.port, 0);
         assert_eq!(opts.host, "127.0.0.1");
+        assert_eq!(opts.prime_bits, 128);
         Ok(())
     }
 
@@ -72,16 +77,16 @@ mod options {
     }
 
     #[test]
-    fn port_25() -> Result<()> {
-        let opts = Options::parse_from(vec!["bin", "-p=25"]);
-        assert_eq!(opts.port, 25);
+    fn port_3000() -> Result<()> {
+        let opts = Options::parse_from(vec!["bin", "-p=3000"]);
+        assert_eq!(opts.port, 3000);
         Ok(())
     }
 
     #[test]
-    fn host_test_net() -> Result<()> {
-        let opts = Options::parse_from(vec!["bin", "--host=test.net"]);
-        assert_eq!(opts.host, "test.net");
+    fn host_test_local() -> Result<()> {
+        let opts = Options::parse_from(vec!["bin", "--host=test.local"]);
+        assert_eq!(opts.host, "test.local");
         Ok(())
     }
 
@@ -89,6 +94,13 @@ mod options {
     fn host_0000() -> Result<()> {
         let opts = Options::parse_from(vec!["bin", "--host=0.0.0.0"]);
         assert_eq!(opts.host, "0.0.0.0");
+        Ok(())
+    }
+
+    #[test]
+    fn prime_bits_32() -> Result<()> {
+        let opts = Options::parse_from(vec!["bin", "--prime-bits=32"]);
+        assert_eq!(opts.prime_bits, 32);
         Ok(())
     }
 }
