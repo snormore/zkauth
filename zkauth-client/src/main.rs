@@ -2,7 +2,7 @@ use anyhow::Result;
 use clap::Parser;
 use clap_verbosity_flag::{InfoLevel, Verbosity};
 use env_logger::Env;
-use zkpauthctl::prover::Prover;
+use zkauth_client::prover::Prover;
 
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]

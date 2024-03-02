@@ -1,5 +1,5 @@
 syntax = "proto3";
-package zkpauth.v1;
+package zkauth.v1;
 
 message RegisterRequest {
   string user = 1;

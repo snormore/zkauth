@@ -4,7 +4,7 @@ use rand::rngs::ThreadRng;
 use rand::Rng;
 use sha2::{Digest, Sha256};
 use tonic::transport::Channel;
-use zkpauthpb::v1::{
+use zkauth_proto::v1::{
     auth_client::AuthClient, AuthenticationAnswerRequest, AuthenticationChallengeRequest,
     GetPublicParametersRequest, RegisterRequest,
 };

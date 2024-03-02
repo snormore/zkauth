@@ -1,5 +1,5 @@
 [package]
-name = "zkpauthd"
+name = "zkauth-server"
 version = "0.1.0"
 edition = "2021"
 
@@ -8,7 +8,7 @@ edition = "2021"
 [dependencies]
 dotenvy = "0.15.7"
 tokio = { version = "1.36.0", features = ["full"] }
-zkpauthpb = { path = "../zkpauthpb", features = ["full"] }
+zkauth-proto = { path = "../zkauth-proto", features = ["full"] }
 tonic = "0.11.0"
 clap = { version = "4.5.1", features = ["env", "derive"] }
 anyhow = "1.0.80"

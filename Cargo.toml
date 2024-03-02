@@ -1,6 +1,6 @@
 [workspace]
 
-members = ["zkpauthctl", "zkpauthd", "zkpauthpb"]
+members = ["zkauth-client", "zkauth-server", "zkauth-proto"]
 
 exclude = []
 
