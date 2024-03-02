@@ -4,6 +4,8 @@ ZKP protocol for authentication
 
 # TODO
 
+- Add github workflows for codecov, docs on gh pages, and ci-image
+- Add devcontainer
 - Finish off prover-side test coverage
 - Add integration tests
 - Add tests for multiple logins/challenges concurrently for the same user
