@@ -1,6 +1,10 @@
-# zkp-auth
+# zkauth
 
-ZKP protocol for authentication
+This is an implementation of the Chaum-Pedersen ZKP protocol which allows users to register and login with a server without providing their passwords.
+
+[![codecov](https://codecov.io/gh/snormore/zkauth/graph/badge.svg?token=JN2KIKA175)](https://codecov.io/gh/snormore/zkauth)
+
+The protocol is explained in [Cryptography: An Introduction](https://www.cs.umd.edu/~waa/414-F11/IntroToCrypto.pdf), chapter 25, section 3.2.
 
 # TODO
 
