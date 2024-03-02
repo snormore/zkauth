@@ -35,6 +35,11 @@ jobs:
           profile: minimal
           override: true
 
+      - name: Run tests
+        run: |
+          cargo test
+        id: test
+
       - name: Build cargo doc
         run: |
           rm -rf ./_site
