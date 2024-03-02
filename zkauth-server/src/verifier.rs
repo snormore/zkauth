@@ -85,22 +85,25 @@ impl Auth for Verifier {
     ) -> Result<Response<RegisterResponse>, Status> {
         let request = request.into_inner();
 
-        log::info!("{:?}", request);
+        if request.user.is_empty() {
+            return Err(Status::invalid_argument("Invalid user argument"));
+        }
 
-        // Return error if user is already registered.
+        let y1 = request
+            .y1
+            .parse::<BigInt>()
+            .map_err(|_| tonic::Status::invalid_argument("Invalid y1 argument"))?;
+
+        let y2 = request
+            .y2
+            .parse::<BigInt>()
+            .map_err(|_| tonic::Status::invalid_argument("Invalid y2 argument"))?;
+
         if self.users.get(&request.user).is_some() {
             return Err(Status::already_exists("User already registered"));
         }
 
-        // Store (user, (y1, y2)) for use in create_authentication_challenge and verify_authentication.
-        self.users.insert(
-            request.user,
-            User {
-                // TODO: validate and return error if y1,y2 not numbers instead of unwrap
-                y1: request.y1.parse::<BigInt>().unwrap(),
-                y2: request.y2.parse::<BigInt>().unwrap(),
-            },
-        );
+        self.users.insert(request.user, User { y1, y2 });
 
         Ok(Response::new(RegisterResponse {}))
     }
@@ -110,22 +113,28 @@ impl Auth for Verifier {
         request: Request<AuthenticationChallengeRequest>,
     ) -> Result<Response<AuthenticationChallengeResponse>, Status> {
         let request = request.into_inner();
-        // TODO: validate and return error if r1,r2 not numbers instead of unwrap
-        let r1 = request.r1.parse::<BigInt>().unwrap();
-        let r2 = request.r2.parse::<BigInt>().unwrap();
 
-        log::info!("{:?}", request);
+        if request.user.is_empty() {
+            return Err(Status::invalid_argument("Invalid user argument"));
+        }
 
-        let mut rng = rand::thread_rng();
+        let r1 = request
+            .r1
+            .parse::<BigInt>()
+            .map_err(|_| tonic::Status::invalid_argument("Invalid r1 argument"))?;
+        let r2 = request
+            .r2
+            .parse::<BigInt>()
+            .map_err(|_| tonic::Status::invalid_argument("Invalid r2 argument"))?;
 
-        // Generate random challenge number c.
-        // Should not be negative because it's used as an exponent.
-        let c: BigUint = rng.sample(RandomBits::new(32));
-
-        // Return error if user hasn't been registered.
         if self.users.get(&request.user).is_none() {
             return Err(Status::not_found("User not found"));
         }
+
+        // Generate random challenge number c.
+        // Should not be negative because it's used as an exponent.
+        let mut rng = rand::thread_rng();
+        let c: BigUint = rng.sample(RandomBits::new(32));
 
         // Store (auth_id, (user, c)) for use in verify_authentication.
         let auth_id = Uuid::new_v4().to_string();
@@ -150,24 +159,25 @@ impl Auth for Verifier {
         request: Request<AuthenticationAnswerRequest>,
     ) -> Result<Response<AuthenticationAnswerResponse>, Status> {
         let request = request.into_inner();
-        // TODO: validate and return error if s not number instead of unwrap
-        let s = request.s.parse::<BigInt>().unwrap();
 
-        log::info!("{:?}", request);
+        let s = request
+            .s
+            .parse::<BigInt>()
+            .map_err(|_| tonic::Status::invalid_argument("Invalid s argument"))?;
 
-        // Lookup (auth_id, (user, c))
+        if request.auth_id.is_empty() {
+            return Err(Status::invalid_argument("Invalid auth_id argument"));
+        }
+
         let challenge = self
             .challenges
             .get(&request.auth_id)
             .ok_or_else(|| Status::not_found("Challenge not found"))?;
-        log::info!("{:?}", challenge);
 
-        // Lookup (user, (y1, y2))
         let user = self
             .users
             .get(&challenge.user)
             .ok_or_else(|| Status::not_found("User not found"))?;
-        log::info!("{:?}", user.value());
 
         // Verify and return error if not correct.
         let p = self.parameters.p.clone();
@@ -267,6 +277,96 @@ mod register {
 
         Ok(())
     }
+
+    #[tokio::test]
+    async fn returns_error_when_user_is_empty() -> Result<()> {
+        let verifier = Verifier::default();
+        let result = verifier
+            .register(Request::new(RegisterRequest {
+                user: "".to_string(),
+                y1: "1".to_string(),
+                y2: "1".to_string(),
+            }))
+            .await;
+
+        let err = result.unwrap_err();
+        assert_eq!(err.code(), Code::InvalidArgument);
+        assert_eq!(err.message(), "Invalid user argument");
+
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn returns_error_when_y1_is_empty() -> Result<()> {
+        let verifier = Verifier::default();
+        let result = verifier
+            .register(Request::new(RegisterRequest {
+                user: "peggy".to_string(),
+                y1: "".to_string(),
+                y2: "1".to_string(),
+            }))
+            .await;
+
+        let err = result.unwrap_err();
+        assert_eq!(err.code(), Code::InvalidArgument);
+        assert_eq!(err.message(), "Invalid y1 argument");
+
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn returns_error_when_y2_is_empty() -> Result<()> {
+        let verifier = Verifier::default();
+        let result = verifier
+            .register(Request::new(RegisterRequest {
+                user: "peggy".to_string(),
+                y1: "1".to_string(),
+                y2: "".to_string(),
+            }))
+            .await;
+
+        let err = result.unwrap_err();
+        assert_eq!(err.code(), Code::InvalidArgument);
+        assert_eq!(err.message(), "Invalid y2 argument");
+
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn returns_error_when_y1_is_not_a_number() -> Result<()> {
+        let verifier = Verifier::default();
+        let result = verifier
+            .register(Request::new(RegisterRequest {
+                user: "peggy".to_string(),
+                y1: "not-a-number".to_string(),
+                y2: "1".to_string(),
+            }))
+            .await;
+
+        let err = result.unwrap_err();
+        assert_eq!(err.code(), Code::InvalidArgument);
+        assert_eq!(err.message(), "Invalid y1 argument");
+
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn returns_error_when_y2_is_not_a_number() -> Result<()> {
+        let verifier = Verifier::default();
+        let result = verifier
+            .register(Request::new(RegisterRequest {
+                user: "peggy".to_string(),
+                y1: "1".to_string(),
+                y2: "not-a-number".to_string(),
+            }))
+            .await;
+
+        let err = result.unwrap_err();
+        assert_eq!(err.code(), Code::InvalidArgument);
+        assert_eq!(err.message(), "Invalid y2 argument");
+
+        Ok(())
+    }
 }
 
 #[cfg(test)]
@@ -274,24 +374,6 @@ mod create_authentication_challenge {
     use super::*;
     use anyhow::Result;
     use tonic::Code;
-
-    #[tokio::test]
-    async fn returns_not_found_when_missing_user() -> Result<()> {
-        let verifier = Verifier::default();
-        let result = verifier
-            .create_authentication_challenge(Request::new(AuthenticationChallengeRequest {
-                user: "peggy".to_string(),
-                r1: "1".to_string(),
-                r2: "1".to_string(),
-            }))
-            .await;
-
-        let err = result.unwrap_err();
-        assert_eq!(err.code(), Code::NotFound);
-        assert_eq!(err.message(), "User not found");
-
-        Ok(())
-    }
 
     #[tokio::test]
     async fn succeeds() -> Result<()> {
@@ -318,49 +400,15 @@ mod create_authentication_challenge {
 
         Ok(())
     }
-}
-
-#[cfg(test)]
-mod verify_authentication {
-    use super::*;
-    use anyhow::Result;
-    use num_traits::Zero;
-    use tonic::Code;
 
     #[tokio::test]
-    async fn returns_not_found_when_missing_challenge() -> Result<()> {
+    async fn returns_not_found_when_unknown_user() -> Result<()> {
         let verifier = Verifier::default();
         let result = verifier
-            .verify_authentication(Request::new(AuthenticationAnswerRequest {
-                auth_id: "".to_string(),
-                s: "1".to_string(),
-            }))
-            .await;
-
-        let err = result.unwrap_err();
-        assert_eq!(err.code(), Code::NotFound);
-        assert_eq!(err.message(), "Challenge not found");
-
-        Ok(())
-    }
-
-    #[tokio::test]
-    async fn returns_not_found_when_missing_user() -> Result<()> {
-        let verifier = Verifier::default();
-        verifier.challenges.insert(
-            "id".to_string(),
-            Challenge {
-                user: "peggy".to_string(),
-                c: One::one(),
-                r1: One::one(),
-                r2: One::one(),
-            },
-        );
-
-        let result = verifier
-            .verify_authentication(Request::new(AuthenticationAnswerRequest {
-                auth_id: "id".to_string(),
-                s: "1".to_string(),
+            .create_authentication_challenge(Request::new(AuthenticationChallengeRequest {
+                user: "unknown".to_string(),
+                r1: "1".to_string(),
+                r2: "1".to_string(),
             }))
             .await;
 
@@ -372,39 +420,102 @@ mod verify_authentication {
     }
 
     #[tokio::test]
-    async fn returns_verification_failed() -> Result<()> {
+    async fn returns_error_when_user_is_empty() -> Result<()> {
         let verifier = Verifier::default();
-
-        verifier.users.insert(
-            "peggy".to_string(),
-            User {
-                y1: One::one(),
-                y2: One::one(),
-            },
-        );
-        verifier.challenges.insert(
-            "id".to_string(),
-            Challenge {
-                user: "peggy".to_string(),
-                c: One::one(),
-                r1: One::one(),
-                r2: One::one(),
-            },
-        );
-
         let result = verifier
-            .verify_authentication(Request::new(AuthenticationAnswerRequest {
-                auth_id: "id".to_string(),
-                s: "1".to_string(),
+            .create_authentication_challenge(Request::new(AuthenticationChallengeRequest {
+                user: "".to_string(),
+                r1: "1".to_string(),
+                r2: "1".to_string(),
             }))
             .await;
 
         let err = result.unwrap_err();
-        assert_eq!(err.code(), Code::FailedPrecondition);
-        assert_eq!(err.message(), "Verification failed");
+        assert_eq!(err.code(), Code::InvalidArgument);
+        assert_eq!(err.message(), "Invalid user argument");
 
         Ok(())
     }
+
+    #[tokio::test]
+    async fn returns_error_when_r1_is_empty() -> Result<()> {
+        let verifier = Verifier::default();
+        let result = verifier
+            .create_authentication_challenge(Request::new(AuthenticationChallengeRequest {
+                user: "peggy".to_string(),
+                r1: "".to_string(),
+                r2: "1".to_string(),
+            }))
+            .await;
+
+        let err = result.unwrap_err();
+        assert_eq!(err.code(), Code::InvalidArgument);
+        assert_eq!(err.message(), "Invalid r1 argument");
+
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn returns_error_when_r2_is_empty() -> Result<()> {
+        let verifier = Verifier::default();
+        let result = verifier
+            .create_authentication_challenge(Request::new(AuthenticationChallengeRequest {
+                user: "peggy".to_string(),
+                r1: "1".to_string(),
+                r2: "".to_string(),
+            }))
+            .await;
+
+        let err = result.unwrap_err();
+        assert_eq!(err.code(), Code::InvalidArgument);
+        assert_eq!(err.message(), "Invalid r2 argument");
+
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn returns_error_when_r1_is_not_a_number() -> Result<()> {
+        let verifier = Verifier::default();
+        let result = verifier
+            .create_authentication_challenge(Request::new(AuthenticationChallengeRequest {
+                user: "peggy".to_string(),
+                r1: "not-a-number".to_string(),
+                r2: "1".to_string(),
+            }))
+            .await;
+
+        let err = result.unwrap_err();
+        assert_eq!(err.code(), Code::InvalidArgument);
+        assert_eq!(err.message(), "Invalid r1 argument");
+
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn returns_error_when_r2_is_not_a_number() -> Result<()> {
+        let verifier = Verifier::default();
+        let result = verifier
+            .create_authentication_challenge(Request::new(AuthenticationChallengeRequest {
+                user: "peggy".to_string(),
+                r1: "1".to_string(),
+                r2: "not-a-number".to_string(),
+            }))
+            .await;
+
+        let err = result.unwrap_err();
+        assert_eq!(err.code(), Code::InvalidArgument);
+        assert_eq!(err.message(), "Invalid r2 argument");
+
+        Ok(())
+    }
+}
+
+#[cfg(test)]
+mod verify_authentication {
+    use super::*;
+    use anyhow::Result;
+    use num_traits::Zero;
+    use tonic::Code;
 
     #[tokio::test]
     async fn succeeds() -> Result<()> {
@@ -466,6 +577,136 @@ mod verify_authentication {
             .into_inner();
 
         assert_eq!(resp.session_id, original_session_id);
+
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn returns_not_found_when_unknown_challenge() -> Result<()> {
+        let verifier = Verifier::default();
+        let result = verifier
+            .verify_authentication(Request::new(AuthenticationAnswerRequest {
+                auth_id: "unknown".to_string(),
+                s: "1".to_string(),
+            }))
+            .await;
+
+        let err = result.unwrap_err();
+        assert_eq!(err.code(), Code::NotFound);
+        assert_eq!(err.message(), "Challenge not found");
+
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn returns_not_found_when_unknown_user() -> Result<()> {
+        let verifier = Verifier::default();
+        verifier.challenges.insert(
+            "id".to_string(),
+            Challenge {
+                user: "unknown".to_string(),
+                c: One::one(),
+                r1: One::one(),
+                r2: One::one(),
+            },
+        );
+
+        let result = verifier
+            .verify_authentication(Request::new(AuthenticationAnswerRequest {
+                auth_id: "id".to_string(),
+                s: "1".to_string(),
+            }))
+            .await;
+
+        let err = result.unwrap_err();
+        assert_eq!(err.code(), Code::NotFound);
+        assert_eq!(err.message(), "User not found");
+
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn returns_error_when_auth_id_is_empty() -> Result<()> {
+        let verifier = Verifier::default();
+        let result = verifier
+            .verify_authentication(Request::new(AuthenticationAnswerRequest {
+                auth_id: "".to_string(),
+                s: "1".to_string(),
+            }))
+            .await;
+
+        let err = result.unwrap_err();
+        assert_eq!(err.code(), Code::InvalidArgument);
+        assert_eq!(err.message(), "Invalid auth_id argument");
+
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn returns_error_when_r1_is_empty() -> Result<()> {
+        let verifier = Verifier::default();
+        let result = verifier
+            .verify_authentication(Request::new(AuthenticationAnswerRequest {
+                auth_id: "".to_string(),
+                s: "".to_string(),
+            }))
+            .await;
+
+        let err = result.unwrap_err();
+        assert_eq!(err.code(), Code::InvalidArgument);
+        assert_eq!(err.message(), "Invalid s argument");
+
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn returns_error_when_r1_is_not_a_number() -> Result<()> {
+        let verifier = Verifier::default();
+        let result = verifier
+            .verify_authentication(Request::new(AuthenticationAnswerRequest {
+                auth_id: "".to_string(),
+                s: "not-a-number".to_string(),
+            }))
+            .await;
+
+        let err = result.unwrap_err();
+        assert_eq!(err.code(), Code::InvalidArgument);
+        assert_eq!(err.message(), "Invalid s argument");
+
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn returns_verification_failed() -> Result<()> {
+        let verifier = Verifier::default();
+
+        verifier.users.insert(
+            "peggy".to_string(),
+            User {
+                y1: One::one(),
+                y2: One::one(),
+            },
+        );
+        verifier.challenges.insert(
+            "id".to_string(),
+            Challenge {
+                user: "peggy".to_string(),
+                c: One::one(),
+                r1: One::one(),
+                r2: One::one(),
+            },
+        );
+
+        let result = verifier
+            .verify_authentication(Request::new(AuthenticationAnswerRequest {
+                auth_id: "id".to_string(),
+                s: "1".to_string(),
+            }))
+            .await;
+
+        let err = result.unwrap_err();
+        assert_eq!(err.code(), Code::FailedPrecondition);
+        assert_eq!(err.message(), "Verification failed");
 
         Ok(())
     }

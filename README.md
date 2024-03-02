@@ -4,8 +4,9 @@ ZKP protocol for authentication
 
 # TODO
 
-- Better error handling whenever )? or await? or unwrap() is used so server doesn't get killed from a panic
 - Finish off prover-side test coverage
+- Add integration tests
+- Add tests for multiple logins/challenges concurrently for the same user
 - Support elliptical instead of scalar https://github.com/gagiuntoli/zkp_chaum_pedersen/blob/7b0c77adf547cef2df17b42ecf49780c679d3e9a/src/lib.rs#L165
 - Docker/compose for the setup
 - Deploy to AWS
