@@ -1,6 +1,6 @@
 use dashmap::DashMap;
 use moka::sync::Cache;
-use num_bigint::{BigInt, BigUint, RandomBits, ToBigInt};
+use num_bigint::{BigInt, BigUint, RandomBits};
 use num_traits::One;
 use rand::Rng;
 use std::time::Duration;
@@ -12,13 +12,7 @@ use zkpauthpb::v1::{
     GetPublicParametersResponse, RegisterRequest, RegisterResponse,
 };
 
-#[derive(Debug)]
-struct Parameters {
-    p: BigInt,
-    q: BigInt,
-    g: BigInt,
-    h: BigInt,
-}
+use crate::parameters::{default_parameters, generate_parameters, Parameters};
 
 #[derive(Debug)]
 struct User {
@@ -47,20 +41,9 @@ pub struct Verifier {
 }
 
 impl Verifier {
-    pub fn new() -> Self {
+    pub fn new(parameters: Parameters) -> Self {
         Self {
-            parameters: Parameters {
-                // Values from https://github.com/twilker/cp-zkp/blob/main/src/lib/chaum_pedersen/algorithm.rs#L11-L15
-                // TODO: Support generating random similar to https://github.com/neongazer/zkp-auth-py/blob/main/zkp_auth/sigma_protocols/utils.py
-                p: "42765216643065397982265462252423826320512529931694366715111734768493812630447"
-                    .parse::<BigInt>()
-                    .unwrap(),
-                q: "21382608321532698991132731126211913160256264965847183357555867384246906315223"
-                    .parse::<BigInt>()
-                    .unwrap(),
-                g: 4.to_bigint().unwrap(),
-                h: 9.to_bigint().unwrap(),
-            },
+            parameters,
             users: DashMap::new(),
             challenges: Cache::builder()
                 .time_to_live(Duration::from_secs(300))
@@ -70,11 +53,15 @@ impl Verifier {
                 .build(),
         }
     }
+
+    pub fn generated(prime_bits: usize) -> Self {
+        Self::new(generate_parameters(prime_bits))
+    }
 }
 
 impl Default for Verifier {
     fn default() -> Self {
-        Self::new()
+        Self::new(default_parameters())
     }
 }
 
@@ -214,7 +201,7 @@ mod get_public_parameters {
 
     #[tokio::test]
     async fn succeeds() -> Result<()> {
-        let verifier = Verifier::new();
+        let verifier = Verifier::default();
         let resp = verifier
             .get_public_parameters(Request::new(GetPublicParametersRequest {}))
             .await?
@@ -237,7 +224,7 @@ mod register {
 
     #[tokio::test]
     async fn succeeds() -> Result<()> {
-        let verifier = Verifier::new();
+        let verifier = Verifier::default();
         let resp = verifier
             .register(Request::new(RegisterRequest {
                 user: "peggy".to_string(),
@@ -254,7 +241,7 @@ mod register {
 
     #[tokio::test]
     async fn returns_error_when_user_already_registered() -> Result<()> {
-        let verifier = Verifier::new();
+        let verifier = Verifier::default();
         verifier.users.insert(
             "peggy".to_string(),
             User {
@@ -287,7 +274,7 @@ mod create_authentication_challenge {
 
     #[tokio::test]
     async fn returns_not_found_when_missing_user() -> Result<()> {
-        let verifier = Verifier::new();
+        let verifier = Verifier::default();
         let result = verifier
             .create_authentication_challenge(Request::new(AuthenticationChallengeRequest {
                 user: "peggy".to_string(),
@@ -305,7 +292,7 @@ mod create_authentication_challenge {
 
     #[tokio::test]
     async fn succeeds() -> Result<()> {
-        let verifier = Verifier::new();
+        let verifier = Verifier::default();
         verifier.users.insert(
             "peggy".to_string(),
             User {
@@ -339,7 +326,7 @@ mod verify_authentication {
 
     #[tokio::test]
     async fn returns_not_found_when_missing_challenge() -> Result<()> {
-        let verifier = Verifier::new();
+        let verifier = Verifier::default();
         let result = verifier
             .verify_authentication(Request::new(AuthenticationAnswerRequest {
                 auth_id: "".to_string(),
@@ -356,7 +343,7 @@ mod verify_authentication {
 
     #[tokio::test]
     async fn returns_not_found_when_missing_user() -> Result<()> {
-        let verifier = Verifier::new();
+        let verifier = Verifier::default();
         verifier.challenges.insert(
             "id".to_string(),
             Challenge {
@@ -383,7 +370,7 @@ mod verify_authentication {
 
     #[tokio::test]
     async fn returns_verification_failed() -> Result<()> {
-        let verifier = Verifier::new();
+        let verifier = Verifier::default();
 
         verifier.users.insert(
             "peggy".to_string(),
@@ -418,7 +405,7 @@ mod verify_authentication {
 
     #[tokio::test]
     async fn succeeds() -> Result<()> {
-        let verifier = Verifier::new();
+        let verifier = Verifier::default();
 
         let params = verifier
             .get_public_parameters(Request::new(GetPublicParametersRequest {}))

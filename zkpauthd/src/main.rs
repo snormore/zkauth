@@ -45,7 +45,7 @@ async fn main() -> Result<()> {
     log::info!("✅ Server listening on {}", listener.local_addr()?);
 
     Server::builder()
-        .add_service(AuthServer::new(Verifier::new()))
+        .add_service(AuthServer::new(Verifier::generated(256)))
         .serve_with_incoming(tokio_stream::wrappers::TcpListenerStream::new(listener))
         .await?;
 
