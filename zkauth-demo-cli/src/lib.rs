@@ -1,12 +1,23 @@
 use anyhow::Result;
 use zkauth_client::{prover::Prover, AuthClient};
 
-pub async fn run(address: String) -> Result<()> {
+pub async fn run(
+    address: String,
+    user: String,
+    password: String,
+    register: bool,
+    login: bool,
+) -> Result<()> {
     let client = AuthClient::connect(address).await?;
-    let prover = Prover::new(client, "user".to_string(), "password".to_string()).await?;
+    let prover = Prover::new(client, user, password).await?;
 
-    prover.register().await?;
-    prover.login().await?;
+    if register {
+        prover.register().await?;
+    }
+
+    if login {
+        prover.login().await?;
+    }
 
     Ok(())
 }
@@ -37,7 +48,14 @@ mod run {
     #[tokio::test]
     async fn succeeds() -> Result<()> {
         let address = start_server_in_background().await?;
-        run(address).await?;
+        run(
+            address,
+            "user".to_string(),
+            "password".to_string(),
+            true,
+            true,
+        )
+        .await?;
         Ok(())
     }
 }

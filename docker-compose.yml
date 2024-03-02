@@ -10,3 +10,10 @@ services:
     ports:
       - "50001:5000"
     restart: always
+
+  cli:
+    build:
+      dockerfile: zkauth-demo-cli/Dockerfile
+    environment:
+      - ZKAUTH_ADDRESS=http://server:5000
+    restart: "no"
