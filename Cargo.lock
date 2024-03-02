@@ -1489,6 +1489,21 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3369f5ac52d5eb6ab48c6b4ffdc8efbcad6b89c765749064ba298f2c68a16a76"
 
 [[package]]
+name = "tests"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "env_logger",
+ "log",
+ "tokio",
+ "tokio-stream",
+ "tonic",
+ "zkauth-client",
+ "zkauth-pb",
+ "zkauth-server",
+]
+
+[[package]]
 name = "thiserror"
 version = "1.0.57"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2050,19 +2065,4 @@ dependencies = [
  "uuid",
  "wait-timeout",
  "zkauth-pb",
-]
-
-[[package]]
-name = "zkauth-tests"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "env_logger",
- "log",
- "tokio",
- "tokio-stream",
- "tonic",
- "zkauth-client",
- "zkauth-pb",
- "zkauth-server",
 ]
