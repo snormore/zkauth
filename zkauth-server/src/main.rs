@@ -4,7 +4,7 @@ use clap_verbosity_flag::{InfoLevel, Verbosity};
 use env_logger::Env;
 use tokio::net::TcpListener;
 use tonic::transport::Server;
-use zkauth_proto::v1::auth_server::AuthServer;
+use zkauth_pb::v1::auth_server::AuthServer;
 use zkauth_server::Verifier;
 
 #[derive(Parser, Debug)]

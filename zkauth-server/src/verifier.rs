@@ -6,7 +6,7 @@ use rand::Rng;
 use std::time::Duration;
 use tonic::{Request, Response, Status};
 use uuid::Uuid;
-use zkauth_proto::v1::{
+use zkauth_pb::v1::{
     auth_server::Auth, AuthenticationAnswerRequest, AuthenticationAnswerResponse,
     AuthenticationChallengeRequest, AuthenticationChallengeResponse, GetPublicParametersRequest,
     GetPublicParametersResponse, RegisterRequest, RegisterResponse,

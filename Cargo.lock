@@ -1904,11 +1904,11 @@ dependencies = [
  "rand 0.8.5",
  "sha2",
  "tonic",
- "zkauth-proto",
+ "zkauth-pb",
 ]
 
 [[package]]
-name = "zkauth-proto"
+name = "zkauth-pb"
 version = "0.1.0"
 dependencies = [
  "pbjson",
@@ -1937,5 +1937,5 @@ dependencies = [
  "tokio-stream",
  "tonic",
  "uuid",
- "zkauth-proto",
+ "zkauth-pb",
 ]
