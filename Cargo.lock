@@ -1944,3 +1944,18 @@ dependencies = [
  "uuid",
  "zkauth-pb",
 ]
+
+[[package]]
+name = "zkauth-tests"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "env_logger",
+ "log",
+ "tokio",
+ "tokio-stream",
+ "tonic",
+ "zkauth-client",
+ "zkauth-pb",
+ "zkauth-server",
+]

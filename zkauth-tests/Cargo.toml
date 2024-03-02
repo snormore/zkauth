@@ -1,0 +1,17 @@
+[package]
+name = "zkauth-tests"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+zkauth-pb = { path = "../zkauth-pb", features = ["full"] }
+zkauth-client = { path = "../zkauth-client" }
+zkauth-server = { path = "../zkauth-server" }
+tokio = { version = "1.36.0", features = ["full"] }
+tokio-stream = "0.1.14"
+anyhow = "1.0.80"
+log = "0.4.21"
+tonic = "0.11.0"
+env_logger = "0.11.2"

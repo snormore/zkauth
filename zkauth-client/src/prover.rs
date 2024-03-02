@@ -1,18 +1,17 @@
 use num_bigint::{BigInt, BigUint, RandomBits};
 use num_traits::Zero;
-use rand::rngs::ThreadRng;
 use rand::Rng;
 use sha2::{Digest, Sha256};
-use tonic::transport::Channel;
+use tonic::{transport::Channel, Status};
 use zkauth_pb::v1::{
     auth_client::AuthClient, AuthenticationAnswerRequest, AuthenticationChallengeRequest,
     GetPublicParametersRequest, RegisterRequest,
 };
 
+#[derive(Debug)]
 pub struct Prover {
     client: AuthClient<Channel>,
     parameters: Parameters,
-    rng: ThreadRng,
     user: String,
     x: BigUint,
 }
@@ -30,8 +29,14 @@ impl Prover {
         mut client: AuthClient<Channel>,
         user: String,
         password: String,
-    ) -> Result<Self, Box<dyn std::error::Error>> {
-        // let mut client = AuthClient::connect(address).await?;
+    ) -> Result<Self, Status> {
+        if user.is_empty() {
+            return Err(Status::invalid_argument("Invalid user argument"));
+        }
+
+        if password.is_empty() {
+            return Err(Status::invalid_argument("Invalid password argument"));
+        }
 
         let params = client
             .get_public_parameters(GetPublicParametersRequest {})
@@ -42,10 +47,9 @@ impl Prover {
         let g = params.g.parse::<BigInt>().unwrap();
         let h = params.h.parse::<BigInt>().unwrap();
 
-        let rng = rand::thread_rng();
-
         // Generate random secret number x.
         // Should not be negative because it's used as an exponent.
+        // let mut rng = rand::thread_rng();
         // let x: BigUint = rng.sample(RandomBits::new(RANDOM_SECRET_LENGTH_BITS));
 
         // Convert password string to x number.
@@ -54,13 +58,12 @@ impl Prover {
         Ok(Prover {
             client,
             parameters: Parameters { p, q, g, h },
-            rng,
             user,
             x,
         })
     }
 
-    pub async fn register(&mut self) -> Result<(), Box<dyn std::error::Error>> {
+    pub async fn register(&self) -> Result<(), Status> {
         let p = &self.parameters.p;
         let g = &self.parameters.g;
         let h = &self.parameters.h;
@@ -75,6 +78,7 @@ impl Prover {
         // Send register request.
         let resp = self
             .client
+            .clone()
             .register(RegisterRequest {
                 user: self.user.clone(),
                 y1: y1.to_string(),
@@ -88,10 +92,11 @@ impl Prover {
         Ok(())
     }
 
-    pub async fn login(&mut self) -> Result<(), Box<dyn std::error::Error>> {
+    pub async fn login(&self) -> Result<(), Status> {
         // Generate random number k.
         // Should not be negative because it's used as an exponent.
-        let k: BigUint = self.rng.sample(RandomBits::new(32));
+        let mut rng = rand::thread_rng();
+        let k: BigUint = rng.sample(RandomBits::new(32));
         let signed_k: BigInt = k.clone().into();
 
         let p = &self.parameters.p;
@@ -108,6 +113,7 @@ impl Prover {
         // Send create_authentication_challenge request.
         let resp = self
             .client
+            .clone()
             .create_authentication_challenge(AuthenticationChallengeRequest {
                 user: self.user.clone(),
                 r1: r1.to_string(),
@@ -131,6 +137,7 @@ impl Prover {
         // Send verify_authentication request.
         let resp = self
             .client
+            .clone()
             .verify_authentication(AuthenticationAnswerRequest {
                 auth_id: resp.auth_id,
                 s: s.to_string(),
@@ -181,7 +188,7 @@ mod register {
     #[tokio::test]
     async fn succeeds() -> Result<()> {
         let client = mock_client().await?;
-        let mut prover = Prover::new(client, "user".to_string(), "password".to_string())
+        let prover = Prover::new(client, "user".to_string(), "password".to_string())
             .await
             .unwrap();
 
@@ -200,7 +207,7 @@ mod login {
     #[tokio::test]
     async fn succeeds() -> Result<()> {
         let client = mock_client().await?;
-        let mut prover = Prover::new(client, "user".to_string(), "password".to_string())
+        let prover = Prover::new(client, "user".to_string(), "password".to_string())
             .await
             .unwrap();
 

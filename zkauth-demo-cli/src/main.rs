@@ -33,7 +33,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     opts.init_logger();
 
     let client = AuthClient::connect(opts.address).await?;
-    let mut prover = Prover::new(client, "user".to_string(), "password".to_string()).await?;
+    let prover = Prover::new(client, "user".to_string(), "password".to_string()).await?;
 
     prover.register().await?;
 
