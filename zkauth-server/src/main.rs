@@ -1,14 +1,21 @@
 use anyhow::Result;
+use bytes::Bytes;
 use clap::Parser;
 use clap_verbosity_flag::{InfoLevel, Verbosity};
+use curve25519_dalek::RistrettoPoint;
 use env_logger::Env;
 use futures_util::FutureExt;
+use num_bigint::BigInt;
 use tokio::net::TcpListener;
 use tokio::signal;
 use tokio::sync::oneshot;
 use tonic::transport::Server;
+use zkauth::discrete_logarithm::verifier::{default_parameters, DiscreteLogarithmVerifier};
+use zkauth::elliptic_curve;
+use zkauth::elliptic_curve::verifier::EllipticCurveVerifier;
 use zkauth_pb::v1::auth_server::AuthServer;
-use zkauth_server::Verifier;
+use zkauth_pb::v1::{configuration, Configuration};
+use zkauth_server::service::Service;
 
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
@@ -64,8 +71,35 @@ async fn main() -> Result<()> {
     let addr = format!("{}:{}", opts.host, opts.port);
     let listener = TcpListener::bind(addr).await?;
     log::info!("✅ Server listening on {}", listener.local_addr()?);
+    // TODO: set up configuration/verifier in a better way
+    // let (p, q, g, h) = default_parameters();
+    // let service = Service::new(
+    //     Configuration {
+    //         operations: Some(configuration::Operations::DiscreteLogarithm(
+    //             configuration::DiscreteLogarithm {
+    //                 p: bigint_to_bytes(p.clone()),
+    //                 q: bigint_to_bytes(q.clone()),
+    //                 g: bigint_to_bytes(g.clone()),
+    //                 h: bigint_to_bytes(h.clone()),
+    //             },
+    //         )),
+    //     },
+    //     Box::new(DiscreteLogarithmVerifier::new(p, q, g, h)),
+    // );
+    let (g, h) = elliptic_curve::verifier::generate_parameters();
+    let service = Service::new(
+        Configuration {
+            operations: Some(configuration::Operations::EllipticCurve(
+                configuration::EllipticCurve {
+                    g: ristretto_point_to_bytes(g),
+                    h: ristretto_point_to_bytes(h),
+                },
+            )),
+        },
+        Box::new(EllipticCurveVerifier::new(g, h)),
+    );
     let server = Server::builder()
-        .add_service(AuthServer::new(Verifier::generated(opts.prime_bits)))
+        .add_service(AuthServer::new(service))
         .serve_with_incoming_shutdown(
             tokio_stream::wrappers::TcpListenerStream::new(listener),
             shutdown_receiver.map(|_| ()),
@@ -82,6 +116,16 @@ async fn main() -> Result<()> {
     }
 
     Ok(())
+}
+
+fn bigint_to_bytes(v: BigInt) -> Bytes {
+    let (_, vec) = v.to_bytes_be();
+    Bytes::from(vec)
+}
+
+fn ristretto_point_to_bytes(v: RistrettoPoint) -> Bytes {
+    let v = v.compress().to_bytes();
+    Bytes::copy_from_slice(&v)
 }
 
 #[cfg(test)]

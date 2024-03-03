@@ -6,6 +6,7 @@ members = [
     "zkauth-server",
     "zkauth-demo-cli",
     "tests",
+    "zkauth",
 ]
 
 exclude = []

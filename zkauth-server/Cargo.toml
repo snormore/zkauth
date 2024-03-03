@@ -9,6 +9,7 @@ edition = "2021"
 dotenvy = "0.15.7"
 tokio = { version = "1.36.0", features = ["full"] }
 zkauth-pb = { path = "../zkauth-pb", features = ["full"] }
+zkauth = { path = "../zkauth" }
 tonic = "0.11.0"
 clap = { version = "4.5.1", features = ["env", "derive"] }
 anyhow = "1.0.80"
@@ -24,6 +25,11 @@ num-traits = "0.2.18"
 moka = { version = "0.12.5", features = ["future", "sync"] }
 num-primes = "0.3.0"
 futures-util = "0.3.30"
+curve25519-dalek = { version = "4.1.2", features = ["digest"] }
+sha2 = "0.10.8"
+base64 = "0.22.0"
+bytes = "1.5.0"
+hex = "0.4.3"
 
 [dev-dependencies]
 assert_cmd = "2.0.14"

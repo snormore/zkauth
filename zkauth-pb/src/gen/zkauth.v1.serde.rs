@@ -18,7 +18,8 @@ impl serde::Serialize for AuthenticationAnswerRequest {
             struct_ser.serialize_field("authId", &self.auth_id)?;
         }
         if !self.s.is_empty() {
-            struct_ser.serialize_field("s", &self.s)?;
+            #[allow(clippy::needless_borrow)]
+            struct_ser.serialize_field("s", pbjson::private::base64::encode(&self.s).as_str())?;
         }
         struct_ser.end()
     }
@@ -95,7 +96,9 @@ impl<'de> serde::Deserialize<'de> for AuthenticationAnswerRequest {
                             if s__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("s"));
                             }
-                            s__ = Some(map_.next_value()?);
+                            s__ = 
+                                Some(map_.next_value::<::pbjson::private::BytesDeserialize<_>>()?.0)
+                            ;
                         }
                     }
                 }
@@ -222,10 +225,12 @@ impl serde::Serialize for AuthenticationChallengeRequest {
             struct_ser.serialize_field("user", &self.user)?;
         }
         if !self.r1.is_empty() {
-            struct_ser.serialize_field("r1", &self.r1)?;
+            #[allow(clippy::needless_borrow)]
+            struct_ser.serialize_field("r1", pbjson::private::base64::encode(&self.r1).as_str())?;
         }
         if !self.r2.is_empty() {
-            struct_ser.serialize_field("r2", &self.r2)?;
+            #[allow(clippy::needless_borrow)]
+            struct_ser.serialize_field("r2", pbjson::private::base64::encode(&self.r2).as_str())?;
         }
         struct_ser.end()
     }
@@ -305,13 +310,17 @@ impl<'de> serde::Deserialize<'de> for AuthenticationChallengeRequest {
                             if r1__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("r1"));
                             }
-                            r1__ = Some(map_.next_value()?);
+                            r1__ = 
+                                Some(map_.next_value::<::pbjson::private::BytesDeserialize<_>>()?.0)
+                            ;
                         }
                         GeneratedField::R2 => {
                             if r2__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("r2"));
                             }
-                            r2__ = Some(map_.next_value()?);
+                            r2__ = 
+                                Some(map_.next_value::<::pbjson::private::BytesDeserialize<_>>()?.0)
+                            ;
                         }
                     }
                 }
@@ -344,7 +353,8 @@ impl serde::Serialize for AuthenticationChallengeResponse {
             struct_ser.serialize_field("authId", &self.auth_id)?;
         }
         if !self.c.is_empty() {
-            struct_ser.serialize_field("c", &self.c)?;
+            #[allow(clippy::needless_borrow)]
+            struct_ser.serialize_field("c", pbjson::private::base64::encode(&self.c).as_str())?;
         }
         struct_ser.end()
     }
@@ -421,7 +431,9 @@ impl<'de> serde::Deserialize<'de> for AuthenticationChallengeResponse {
                             if c__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("c"));
                             }
-                            c__ = Some(map_.next_value()?);
+                            c__ = 
+                                Some(map_.next_value::<::pbjson::private::BytesDeserialize<_>>()?.0)
+                            ;
                         }
                     }
                 }
@@ -434,29 +446,48 @@ impl<'de> serde::Deserialize<'de> for AuthenticationChallengeResponse {
         deserializer.deserialize_struct("zkauth.v1.AuthenticationChallengeResponse", FIELDS, GeneratedVisitor)
     }
 }
-impl serde::Serialize for GetPublicParametersRequest {
+impl serde::Serialize for Configuration {
     #[allow(deprecated)]
     fn serialize<S>(&self, serializer: S) -> std::result::Result<S::Ok, S::Error>
     where
         S: serde::Serializer,
     {
         use serde::ser::SerializeStruct;
-        let len = 0;
-        let struct_ser = serializer.serialize_struct("zkauth.v1.GetPublicParametersRequest", len)?;
+        let mut len = 0;
+        if self.operations.is_some() {
+            len += 1;
+        }
+        let mut struct_ser = serializer.serialize_struct("zkauth.v1.Configuration", len)?;
+        if let Some(v) = self.operations.as_ref() {
+            match v {
+                configuration::Operations::DiscreteLogarithm(v) => {
+                    struct_ser.serialize_field("discreteLogarithm", v)?;
+                }
+                configuration::Operations::EllipticCurve(v) => {
+                    struct_ser.serialize_field("ellipticCurve", v)?;
+                }
+            }
+        }
         struct_ser.end()
     }
 }
-impl<'de> serde::Deserialize<'de> for GetPublicParametersRequest {
+impl<'de> serde::Deserialize<'de> for Configuration {
     #[allow(deprecated)]
     fn deserialize<D>(deserializer: D) -> std::result::Result<Self, D::Error>
     where
         D: serde::Deserializer<'de>,
     {
         const FIELDS: &[&str] = &[
+            "discrete_logarithm",
+            "discreteLogarithm",
+            "elliptic_curve",
+            "ellipticCurve",
         ];
 
         #[allow(clippy::enum_variant_names)]
         enum GeneratedField {
+            DiscreteLogarithm,
+            EllipticCurve,
         }
         impl<'de> serde::Deserialize<'de> for GeneratedField {
             fn deserialize<D>(deserializer: D) -> std::result::Result<GeneratedField, D::Error>
@@ -477,7 +508,11 @@ impl<'de> serde::Deserialize<'de> for GetPublicParametersRequest {
                     where
                         E: serde::de::Error,
                     {
-                            Err(serde::de::Error::unknown_field(value, FIELDS))
+                        match value {
+                            "discreteLogarithm" | "discrete_logarithm" => Ok(GeneratedField::DiscreteLogarithm),
+                            "ellipticCurve" | "elliptic_curve" => Ok(GeneratedField::EllipticCurve),
+                            _ => Err(serde::de::Error::unknown_field(value, FIELDS)),
+                        }
                     }
                 }
                 deserializer.deserialize_identifier(GeneratedVisitor)
@@ -485,27 +520,44 @@ impl<'de> serde::Deserialize<'de> for GetPublicParametersRequest {
         }
         struct GeneratedVisitor;
         impl<'de> serde::de::Visitor<'de> for GeneratedVisitor {
-            type Value = GetPublicParametersRequest;
+            type Value = Configuration;
 
             fn expecting(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-                formatter.write_str("struct zkauth.v1.GetPublicParametersRequest")
+                formatter.write_str("struct zkauth.v1.Configuration")
             }
 
-            fn visit_map<V>(self, mut map_: V) -> std::result::Result<GetPublicParametersRequest, V::Error>
+            fn visit_map<V>(self, mut map_: V) -> std::result::Result<Configuration, V::Error>
                 where
                     V: serde::de::MapAccess<'de>,
             {
-                while map_.next_key::<GeneratedField>()?.is_some() {
-                    let _ = map_.next_value::<serde::de::IgnoredAny>()?;
+                let mut operations__ = None;
+                while let Some(k) = map_.next_key()? {
+                    match k {
+                        GeneratedField::DiscreteLogarithm => {
+                            if operations__.is_some() {
+                                return Err(serde::de::Error::duplicate_field("discreteLogarithm"));
+                            }
+                            operations__ = map_.next_value::<::std::option::Option<_>>()?.map(configuration::Operations::DiscreteLogarithm)
+;
+                        }
+                        GeneratedField::EllipticCurve => {
+                            if operations__.is_some() {
+                                return Err(serde::de::Error::duplicate_field("ellipticCurve"));
+                            }
+                            operations__ = map_.next_value::<::std::option::Option<_>>()?.map(configuration::Operations::EllipticCurve)
+;
+                        }
+                    }
                 }
-                Ok(GetPublicParametersRequest {
+                Ok(Configuration {
+                    operations: operations__,
                 })
             }
         }
-        deserializer.deserialize_struct("zkauth.v1.GetPublicParametersRequest", FIELDS, GeneratedVisitor)
+        deserializer.deserialize_struct("zkauth.v1.Configuration", FIELDS, GeneratedVisitor)
     }
 }
-impl serde::Serialize for GetPublicParametersResponse {
+impl serde::Serialize for configuration::DiscreteLogarithm {
     #[allow(deprecated)]
     fn serialize<S>(&self, serializer: S) -> std::result::Result<S::Ok, S::Error>
     where
@@ -525,23 +577,27 @@ impl serde::Serialize for GetPublicParametersResponse {
         if !self.h.is_empty() {
             len += 1;
         }
-        let mut struct_ser = serializer.serialize_struct("zkauth.v1.GetPublicParametersResponse", len)?;
+        let mut struct_ser = serializer.serialize_struct("zkauth.v1.Configuration.DiscreteLogarithm", len)?;
         if !self.p.is_empty() {
-            struct_ser.serialize_field("p", &self.p)?;
+            #[allow(clippy::needless_borrow)]
+            struct_ser.serialize_field("p", pbjson::private::base64::encode(&self.p).as_str())?;
         }
         if !self.q.is_empty() {
-            struct_ser.serialize_field("q", &self.q)?;
+            #[allow(clippy::needless_borrow)]
+            struct_ser.serialize_field("q", pbjson::private::base64::encode(&self.q).as_str())?;
         }
         if !self.g.is_empty() {
-            struct_ser.serialize_field("g", &self.g)?;
+            #[allow(clippy::needless_borrow)]
+            struct_ser.serialize_field("g", pbjson::private::base64::encode(&self.g).as_str())?;
         }
         if !self.h.is_empty() {
-            struct_ser.serialize_field("h", &self.h)?;
+            #[allow(clippy::needless_borrow)]
+            struct_ser.serialize_field("h", pbjson::private::base64::encode(&self.h).as_str())?;
         }
         struct_ser.end()
     }
 }
-impl<'de> serde::Deserialize<'de> for GetPublicParametersResponse {
+impl<'de> serde::Deserialize<'de> for configuration::DiscreteLogarithm {
     #[allow(deprecated)]
     fn deserialize<D>(deserializer: D) -> std::result::Result<Self, D::Error>
     where
@@ -594,13 +650,13 @@ impl<'de> serde::Deserialize<'de> for GetPublicParametersResponse {
         }
         struct GeneratedVisitor;
         impl<'de> serde::de::Visitor<'de> for GeneratedVisitor {
-            type Value = GetPublicParametersResponse;
+            type Value = configuration::DiscreteLogarithm;
 
             fn expecting(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-                formatter.write_str("struct zkauth.v1.GetPublicParametersResponse")
+                formatter.write_str("struct zkauth.v1.Configuration.DiscreteLogarithm")
             }
 
-            fn visit_map<V>(self, mut map_: V) -> std::result::Result<GetPublicParametersResponse, V::Error>
+            fn visit_map<V>(self, mut map_: V) -> std::result::Result<configuration::DiscreteLogarithm, V::Error>
                 where
                     V: serde::de::MapAccess<'de>,
             {
@@ -614,29 +670,37 @@ impl<'de> serde::Deserialize<'de> for GetPublicParametersResponse {
                             if p__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("p"));
                             }
-                            p__ = Some(map_.next_value()?);
+                            p__ = 
+                                Some(map_.next_value::<::pbjson::private::BytesDeserialize<_>>()?.0)
+                            ;
                         }
                         GeneratedField::Q => {
                             if q__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("q"));
                             }
-                            q__ = Some(map_.next_value()?);
+                            q__ = 
+                                Some(map_.next_value::<::pbjson::private::BytesDeserialize<_>>()?.0)
+                            ;
                         }
                         GeneratedField::G => {
                             if g__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("g"));
                             }
-                            g__ = Some(map_.next_value()?);
+                            g__ = 
+                                Some(map_.next_value::<::pbjson::private::BytesDeserialize<_>>()?.0)
+                            ;
                         }
                         GeneratedField::H => {
                             if h__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("h"));
                             }
-                            h__ = Some(map_.next_value()?);
+                            h__ = 
+                                Some(map_.next_value::<::pbjson::private::BytesDeserialize<_>>()?.0)
+                            ;
                         }
                     }
                 }
-                Ok(GetPublicParametersResponse {
+                Ok(configuration::DiscreteLogarithm {
                     p: p__.unwrap_or_default(),
                     q: q__.unwrap_or_default(),
                     g: g__.unwrap_or_default(),
@@ -644,7 +708,192 @@ impl<'de> serde::Deserialize<'de> for GetPublicParametersResponse {
                 })
             }
         }
-        deserializer.deserialize_struct("zkauth.v1.GetPublicParametersResponse", FIELDS, GeneratedVisitor)
+        deserializer.deserialize_struct("zkauth.v1.Configuration.DiscreteLogarithm", FIELDS, GeneratedVisitor)
+    }
+}
+impl serde::Serialize for configuration::EllipticCurve {
+    #[allow(deprecated)]
+    fn serialize<S>(&self, serializer: S) -> std::result::Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        use serde::ser::SerializeStruct;
+        let mut len = 0;
+        if !self.g.is_empty() {
+            len += 1;
+        }
+        if !self.h.is_empty() {
+            len += 1;
+        }
+        let mut struct_ser = serializer.serialize_struct("zkauth.v1.Configuration.EllipticCurve", len)?;
+        if !self.g.is_empty() {
+            #[allow(clippy::needless_borrow)]
+            struct_ser.serialize_field("g", pbjson::private::base64::encode(&self.g).as_str())?;
+        }
+        if !self.h.is_empty() {
+            #[allow(clippy::needless_borrow)]
+            struct_ser.serialize_field("h", pbjson::private::base64::encode(&self.h).as_str())?;
+        }
+        struct_ser.end()
+    }
+}
+impl<'de> serde::Deserialize<'de> for configuration::EllipticCurve {
+    #[allow(deprecated)]
+    fn deserialize<D>(deserializer: D) -> std::result::Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        const FIELDS: &[&str] = &[
+            "g",
+            "h",
+        ];
+
+        #[allow(clippy::enum_variant_names)]
+        enum GeneratedField {
+            G,
+            H,
+        }
+        impl<'de> serde::Deserialize<'de> for GeneratedField {
+            fn deserialize<D>(deserializer: D) -> std::result::Result<GeneratedField, D::Error>
+            where
+                D: serde::Deserializer<'de>,
+            {
+                struct GeneratedVisitor;
+
+                impl<'de> serde::de::Visitor<'de> for GeneratedVisitor {
+                    type Value = GeneratedField;
+
+                    fn expecting(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+                        write!(formatter, "expected one of: {:?}", &FIELDS)
+                    }
+
+                    #[allow(unused_variables)]
+                    fn visit_str<E>(self, value: &str) -> std::result::Result<GeneratedField, E>
+                    where
+                        E: serde::de::Error,
+                    {
+                        match value {
+                            "g" => Ok(GeneratedField::G),
+                            "h" => Ok(GeneratedField::H),
+                            _ => Err(serde::de::Error::unknown_field(value, FIELDS)),
+                        }
+                    }
+                }
+                deserializer.deserialize_identifier(GeneratedVisitor)
+            }
+        }
+        struct GeneratedVisitor;
+        impl<'de> serde::de::Visitor<'de> for GeneratedVisitor {
+            type Value = configuration::EllipticCurve;
+
+            fn expecting(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+                formatter.write_str("struct zkauth.v1.Configuration.EllipticCurve")
+            }
+
+            fn visit_map<V>(self, mut map_: V) -> std::result::Result<configuration::EllipticCurve, V::Error>
+                where
+                    V: serde::de::MapAccess<'de>,
+            {
+                let mut g__ = None;
+                let mut h__ = None;
+                while let Some(k) = map_.next_key()? {
+                    match k {
+                        GeneratedField::G => {
+                            if g__.is_some() {
+                                return Err(serde::de::Error::duplicate_field("g"));
+                            }
+                            g__ = 
+                                Some(map_.next_value::<::pbjson::private::BytesDeserialize<_>>()?.0)
+                            ;
+                        }
+                        GeneratedField::H => {
+                            if h__.is_some() {
+                                return Err(serde::de::Error::duplicate_field("h"));
+                            }
+                            h__ = 
+                                Some(map_.next_value::<::pbjson::private::BytesDeserialize<_>>()?.0)
+                            ;
+                        }
+                    }
+                }
+                Ok(configuration::EllipticCurve {
+                    g: g__.unwrap_or_default(),
+                    h: h__.unwrap_or_default(),
+                })
+            }
+        }
+        deserializer.deserialize_struct("zkauth.v1.Configuration.EllipticCurve", FIELDS, GeneratedVisitor)
+    }
+}
+impl serde::Serialize for GetConfigurationRequest {
+    #[allow(deprecated)]
+    fn serialize<S>(&self, serializer: S) -> std::result::Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        use serde::ser::SerializeStruct;
+        let len = 0;
+        let struct_ser = serializer.serialize_struct("zkauth.v1.GetConfigurationRequest", len)?;
+        struct_ser.end()
+    }
+}
+impl<'de> serde::Deserialize<'de> for GetConfigurationRequest {
+    #[allow(deprecated)]
+    fn deserialize<D>(deserializer: D) -> std::result::Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        const FIELDS: &[&str] = &[
+        ];
+
+        #[allow(clippy::enum_variant_names)]
+        enum GeneratedField {
+        }
+        impl<'de> serde::Deserialize<'de> for GeneratedField {
+            fn deserialize<D>(deserializer: D) -> std::result::Result<GeneratedField, D::Error>
+            where
+                D: serde::Deserializer<'de>,
+            {
+                struct GeneratedVisitor;
+
+                impl<'de> serde::de::Visitor<'de> for GeneratedVisitor {
+                    type Value = GeneratedField;
+
+                    fn expecting(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+                        write!(formatter, "expected one of: {:?}", &FIELDS)
+                    }
+
+                    #[allow(unused_variables)]
+                    fn visit_str<E>(self, value: &str) -> std::result::Result<GeneratedField, E>
+                    where
+                        E: serde::de::Error,
+                    {
+                            Err(serde::de::Error::unknown_field(value, FIELDS))
+                    }
+                }
+                deserializer.deserialize_identifier(GeneratedVisitor)
+            }
+        }
+        struct GeneratedVisitor;
+        impl<'de> serde::de::Visitor<'de> for GeneratedVisitor {
+            type Value = GetConfigurationRequest;
+
+            fn expecting(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+                formatter.write_str("struct zkauth.v1.GetConfigurationRequest")
+            }
+
+            fn visit_map<V>(self, mut map_: V) -> std::result::Result<GetConfigurationRequest, V::Error>
+                where
+                    V: serde::de::MapAccess<'de>,
+            {
+                while map_.next_key::<GeneratedField>()?.is_some() {
+                    let _ = map_.next_value::<serde::de::IgnoredAny>()?;
+                }
+                Ok(GetConfigurationRequest {
+                })
+            }
+        }
+        deserializer.deserialize_struct("zkauth.v1.GetConfigurationRequest", FIELDS, GeneratedVisitor)
     }
 }
 impl serde::Serialize for RegisterRequest {
@@ -669,10 +918,12 @@ impl serde::Serialize for RegisterRequest {
             struct_ser.serialize_field("user", &self.user)?;
         }
         if !self.y1.is_empty() {
-            struct_ser.serialize_field("y1", &self.y1)?;
+            #[allow(clippy::needless_borrow)]
+            struct_ser.serialize_field("y1", pbjson::private::base64::encode(&self.y1).as_str())?;
         }
         if !self.y2.is_empty() {
-            struct_ser.serialize_field("y2", &self.y2)?;
+            #[allow(clippy::needless_borrow)]
+            struct_ser.serialize_field("y2", pbjson::private::base64::encode(&self.y2).as_str())?;
         }
         struct_ser.end()
     }
@@ -752,13 +1003,17 @@ impl<'de> serde::Deserialize<'de> for RegisterRequest {
                             if y1__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("y1"));
                             }
-                            y1__ = Some(map_.next_value()?);
+                            y1__ = 
+                                Some(map_.next_value::<::pbjson::private::BytesDeserialize<_>>()?.0)
+                            ;
                         }
                         GeneratedField::Y2 => {
                             if y2__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("y2"));
                             }
-                            y2__ = Some(map_.next_value()?);
+                            y2__ = 
+                                Some(map_.next_value::<::pbjson::private::BytesDeserialize<_>>()?.0)
+                            ;
                         }
                     }
                 }

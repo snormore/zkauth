@@ -3,43 +3,54 @@ package zkauth.v1;
 
 message RegisterRequest {
   string user = 1;
-  string y1 = 2;
-  string y2 = 3;
+  bytes y1 = 2;
+  bytes y2 = 3;
 }
 
 message RegisterResponse {}
 
 message AuthenticationChallengeRequest {
   string user = 1;
-  string r1 = 2;
-  string r2 = 3;
+  bytes r1 = 2;
+  bytes r2 = 3;
 }
 
 message AuthenticationChallengeResponse {
   string auth_id = 1;
-  string c = 2;
+  bytes c = 2;
 }
 
 message AuthenticationAnswerRequest {
   string auth_id = 1;
-  string s = 2;
+  bytes s = 2;
 }
 
 message AuthenticationAnswerResponse {
   string session_id = 1;
 }
 
-message GetPublicParametersRequest {}
+message GetConfigurationRequest {}
 
-message GetPublicParametersResponse {
-  string p = 1;
-  string q = 2;
-  string g = 3;
-  string h = 4;
+message Configuration {
+  message DiscreteLogarithm {
+    bytes p = 1;
+    bytes q = 2;
+    bytes g = 3;
+    bytes h = 4;
+  }
+  message EllipticCurve {
+    bytes g = 1;
+    bytes h = 2;
+  }
+
+  oneof operations {
+    DiscreteLogarithm discrete_logarithm = 1;
+    EllipticCurve elliptic_curve = 2;
+  }
 }
 
 service Auth {
-  rpc GetPublicParameters(GetPublicParametersRequest) returns (GetPublicParametersResponse) {}
+  rpc GetConfiguration(GetConfigurationRequest) returns (Configuration) {}
   rpc Register(RegisterRequest) returns (RegisterResponse) {}
   rpc CreateAuthenticationChallenge(AuthenticationChallengeRequest) returns (AuthenticationChallengeResponse) {}
   rpc VerifyAuthentication(AuthenticationAnswerRequest) returns (AuthenticationAnswerResponse) {}

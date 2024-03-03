@@ -86,13 +86,10 @@ pub mod auth_client {
             self
         }
         ///
-        pub async fn get_public_parameters(
+        pub async fn get_configuration(
             &mut self,
-            request: impl tonic::IntoRequest<super::GetPublicParametersRequest>,
-        ) -> std::result::Result<
-            tonic::Response<super::GetPublicParametersResponse>,
-            tonic::Status,
-        > {
+            request: impl tonic::IntoRequest<super::GetConfigurationRequest>,
+        ) -> std::result::Result<tonic::Response<super::Configuration>, tonic::Status> {
             self.inner
                 .ready()
                 .await
@@ -104,11 +101,11 @@ pub mod auth_client {
                 })?;
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/zkauth.v1.Auth/GetPublicParameters",
+                "/zkauth.v1.Auth/GetConfiguration",
             );
             let mut req = request.into_request();
             req.extensions_mut()
-                .insert(GrpcMethod::new("zkauth.v1.Auth", "GetPublicParameters"));
+                .insert(GrpcMethod::new("zkauth.v1.Auth", "GetConfiguration"));
             self.inner.unary(req, path, codec).await
         }
         ///
@@ -198,13 +195,10 @@ pub mod auth_server {
     #[async_trait]
     pub trait Auth: Send + Sync + 'static {
         ///
-        async fn get_public_parameters(
+        async fn get_configuration(
             &self,
-            request: tonic::Request<super::GetPublicParametersRequest>,
-        ) -> std::result::Result<
-            tonic::Response<super::GetPublicParametersResponse>,
-            tonic::Status,
-        >;
+            request: tonic::Request<super::GetConfigurationRequest>,
+        ) -> std::result::Result<tonic::Response<super::Configuration>, tonic::Status>;
         ///
         async fn register(
             &self,
@@ -310,25 +304,25 @@ pub mod auth_server {
         fn call(&mut self, req: http::Request<B>) -> Self::Future {
             let inner = self.inner.clone();
             match req.uri().path() {
-                "/zkauth.v1.Auth/GetPublicParameters" => {
+                "/zkauth.v1.Auth/GetConfiguration" => {
                     #[allow(non_camel_case_types)]
-                    struct GetPublicParametersSvc<T: Auth>(pub Arc<T>);
+                    struct GetConfigurationSvc<T: Auth>(pub Arc<T>);
                     impl<
                         T: Auth,
-                    > tonic::server::UnaryService<super::GetPublicParametersRequest>
-                    for GetPublicParametersSvc<T> {
-                        type Response = super::GetPublicParametersResponse;
+                    > tonic::server::UnaryService<super::GetConfigurationRequest>
+                    for GetConfigurationSvc<T> {
+                        type Response = super::Configuration;
                         type Future = BoxFuture<
                             tonic::Response<Self::Response>,
                             tonic::Status,
                         >;
                         fn call(
                             &mut self,
-                            request: tonic::Request<super::GetPublicParametersRequest>,
+                            request: tonic::Request<super::GetConfigurationRequest>,
                         ) -> Self::Future {
                             let inner = Arc::clone(&self.0);
                             let fut = async move {
-                                <T as Auth>::get_public_parameters(&inner, request).await
+                                <T as Auth>::get_configuration(&inner, request).await
                             };
                             Box::pin(fut)
                         }
@@ -340,7 +334,7 @@ pub mod auth_server {
                     let inner = self.inner.clone();
                     let fut = async move {
                         let inner = inner.0;
-                        let method = GetPublicParametersSvc(inner);
+                        let method = GetConfigurationSvc(inner);
                         let codec = tonic::codec::ProstCodec::default();
                         let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(
