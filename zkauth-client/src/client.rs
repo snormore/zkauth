@@ -1,8 +1,13 @@
 use num_bigint::BigInt;
 use tonic::{transport::Channel, Status};
 use zkauth::{
-    discrete_logarithm::prover::DiscreteLogarithmProver,
-    elliptic_curve::{bigint_to_ristretto_point, prover::EllipticCurveProver},
+    discrete_logarithm::{
+        configuration::DiscreteLogarithmConfiguration, prover::DiscreteLogarithmProver,
+    },
+    elliptic_curve::{
+        bigint_to_ristretto_point, configuration::EllipticCurveConfiguration,
+        prover::EllipticCurveProver,
+    },
     Prover,
 };
 use zkauth_pb::v1::{
@@ -38,15 +43,21 @@ impl Client {
             .into_inner();
         let prover: Box<dyn Prover> = match config.operations {
             Some(Operations::DiscreteLogarithm(config)) => Box::new(DiscreteLogarithmProver::new(
-                config.p.parse::<BigInt>().unwrap(),
-                config.q.parse::<BigInt>().unwrap(),
-                config.g.parse::<BigInt>().unwrap(),
-                config.h.parse::<BigInt>().unwrap(),
+                // TODO: do this via into/from
+                DiscreteLogarithmConfiguration {
+                    p: config.p.parse::<BigInt>().unwrap(),
+                    q: config.q.parse::<BigInt>().unwrap(),
+                    g: config.g.parse::<BigInt>().unwrap(),
+                    h: config.h.parse::<BigInt>().unwrap(),
+                },
             )),
-            Some(Operations::EllipticCurve(config)) => Box::new(EllipticCurveProver::new(
-                bigint_to_ristretto_point(config.g.parse::<BigInt>().unwrap()),
-                bigint_to_ristretto_point(config.h.parse::<BigInt>().unwrap()),
-            )),
+            Some(Operations::EllipticCurve(config)) => {
+                Box::new(EllipticCurveProver::new(EllipticCurveConfiguration {
+                    // TODO: do this via into/from
+                    g: bigint_to_ristretto_point(config.g.parse::<BigInt>().unwrap()),
+                    h: bigint_to_ristretto_point(config.h.parse::<BigInt>().unwrap()),
+                }))
+            }
             None => return Err(Status::internal("unknown server configuration")),
         };
 

@@ -1,18 +1,19 @@
 use anyhow::Result;
-use bytes::Bytes;
 use clap::Parser;
 use clap_verbosity_flag::{InfoLevel, Verbosity};
-use curve25519_dalek::RistrettoPoint;
 use env_logger::Env;
 use futures_util::FutureExt;
-use num_bigint::BigInt;
 use tokio::net::TcpListener;
 use tokio::signal;
 use tokio::sync::oneshot;
 use tonic::transport::Server;
-use zkauth::discrete_logarithm::verifier::{default_parameters, DiscreteLogarithmVerifier};
-use zkauth::elliptic_curve::verifier::EllipticCurveVerifier;
-use zkauth::elliptic_curve::{self, ristretto_point_to_bigint};
+use zkauth::discrete_logarithm::{
+    configuration::DiscreteLogarithmConfiguration, verifier::DiscreteLogarithmVerifier,
+};
+use zkauth::elliptic_curve::{
+    configuration::EllipticCurveConfiguration, ristretto_point_to_bigint,
+    verifier::EllipticCurveVerifier,
+};
 use zkauth_pb::v1::auth_server::AuthServer;
 use zkauth_pb::v1::{configuration, Configuration};
 use zkauth_server::service::Service;
@@ -71,33 +72,34 @@ async fn main() -> Result<()> {
     let addr = format!("{}:{}", opts.host, opts.port);
     let listener = TcpListener::bind(addr).await?;
     log::info!("✅ Server listening on {}", listener.local_addr()?);
+
     // TODO: set up configuration/verifier in a better way
-    // let (p, q, g, h) = default_parameters();
-    // let service = Service::new(
-    //     Configuration {
-    //         operations: Some(configuration::Operations::DiscreteLogarithm(
-    //             configuration::DiscreteLogarithm {
-    //                 p: p.to_string(),
-    //                 q: q.to_string(),
-    //                 g: g.to_string(),
-    //                 h: h.to_string(),
-    //             },
-    //         )),
-    //     },
-    //     Box::new(DiscreteLogarithmVerifier::new(p, q, g, h)),
-    // );
-    let (g, h) = elliptic_curve::verifier::generate_parameters();
-    let service = Service::new(
-        Configuration {
-            operations: Some(configuration::Operations::EllipticCurve(
-                configuration::EllipticCurve {
-                    g: ristretto_point_to_bigint(g).to_string(),
-                    h: ristretto_point_to_bigint(h).to_string(),
-                },
-            )),
-        },
-        Box::new(EllipticCurveVerifier::new(g, h)),
-    );
+    // let config = DiscreteLogarithmConfiguration::generate(opts.prime_bits);
+    // // TODO: do this via into/from
+    // let config_pb = Configuration {
+    //     operations: Some(configuration::Operations::DiscreteLogarithm(
+    //         configuration::DiscreteLogarithm {
+    //             p: config.p.to_string(),
+    //             q: config.q.to_string(),
+    //             g: config.g.to_string(),
+    //             h: config.h.to_string(),
+    //         },
+    //     )),
+    // };
+    // let service = Service::new(config_pb, Box::new(DiscreteLogarithmVerifier::new(config)));
+
+    let config = EllipticCurveConfiguration::generate(opts.prime_bits);
+    // TODO: do this via into/from
+    let config_pb = Configuration {
+        operations: Some(configuration::Operations::EllipticCurve(
+            configuration::EllipticCurve {
+                g: ristretto_point_to_bigint(config.g).to_string(),
+                h: ristretto_point_to_bigint(config.h).to_string(),
+            },
+        )),
+    };
+    let service = Service::new(config_pb, Box::new(EllipticCurveVerifier::new(config)));
+
     let server = Server::builder()
         .add_service(AuthServer::new(service))
         .serve_with_incoming_shutdown(

@@ -24,23 +24,3 @@ pub trait Verifier: Sync + Send {
         s: BigInt,
     ) -> (BigInt, BigInt);
 }
-
-pub trait Operations<Element, Scalar> {
-    fn compute_x(&self, password: String) -> Scalar;
-    fn generate_x(&self) -> Scalar;
-
-    fn compute_y1(&self, x: Scalar) -> Element;
-    fn compute_y2(&self, x: Scalar) -> Element;
-
-    fn generate_k(&self) -> Scalar;
-
-    fn compute_r1(&self, k: Scalar) -> Element;
-    fn compute_r2(&self, k: Scalar) -> Element;
-
-    fn generate_c(&self) -> Scalar;
-
-    fn compute_s(&self, x: Scalar, k: Scalar, c: Scalar) -> Scalar;
-
-    fn compute_r1_prime(&self, y1: Element, c: Scalar, s: Scalar) -> Element;
-    fn compute_r2_prime(&self, y2: Element, c: Scalar, s: Scalar) -> Element;
-}

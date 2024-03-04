@@ -1,11 +1,16 @@
 use curve25519_dalek::{ristretto::CompressedRistretto, RistrettoPoint, Scalar};
 use num_bigint::{BigInt, Sign};
 
+pub mod configuration;
 pub mod prover;
 pub mod verifier;
 
-mod operations;
+fn generate_random_scalar() -> Scalar {
+    let mut rng = rand::thread_rng();
+    Scalar::random(&mut rng)
+}
 
+// TODO: convert these to from/into via custom type if necessary
 fn bigint_to_scalar(v: BigInt) -> Scalar {
     let (_, mut bytes) = v.to_bytes_le();
     bytes.resize(32, 0);
