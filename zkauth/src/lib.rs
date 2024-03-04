@@ -37,6 +37,6 @@ pub trait Operations<Element, Scalar> {
 
     fn compute_s(&self, x: Scalar, k: Scalar, c: Scalar) -> Scalar;
 
-    fn compute_vr1(&self, y1: Element, c: Scalar, s: Scalar) -> Element;
-    fn compute_vr2(&self, y2: Element, c: Scalar, s: Scalar) -> Element;
+    fn compute_r1_prime(&self, y1: Element, c: Scalar, s: Scalar) -> Element;
+    fn compute_r2_prime(&self, y2: Element, c: Scalar, s: Scalar) -> Element;
 }

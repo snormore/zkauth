@@ -62,11 +62,11 @@ impl Operations<RistrettoPoint, Scalar> for EllipticCurveOperations {
         k + c * x
     }
 
-    fn compute_vr1(&self, y1: RistrettoPoint, c: Scalar, s: Scalar) -> RistrettoPoint {
+    fn compute_r1_prime(&self, y1: RistrettoPoint, c: Scalar, s: Scalar) -> RistrettoPoint {
         (self.g * s) - (y1 * c)
     }
 
-    fn compute_vr2(&self, y2: RistrettoPoint, c: Scalar, s: Scalar) -> RistrettoPoint {
+    fn compute_r2_prime(&self, y2: RistrettoPoint, c: Scalar, s: Scalar) -> RistrettoPoint {
         (self.h * s) - (y2 * c)
     }
 }

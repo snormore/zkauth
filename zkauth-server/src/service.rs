@@ -197,10 +197,10 @@ impl Auth for Service {
         // let c: BigInt = challenge.c.clone().into();
         // let r1 = self
         //     .operations
-        //     .compute_vr1(user.y1.clone(), c.clone(), s.clone());
+        //     .compute_r1_prime(user.y1.clone(), c.clone(), s.clone());
         // let r2 = self
         //     .operations
-        //     .compute_vr2(user.y1.clone(), c.clone(), s.clone());
+        //     .compute_r2_prime(user.y1.clone(), c.clone(), s.clone());
 
         if r1 != challenge.r1 || r2 != challenge.r2 {
             // log::info!("r1: {:?} != {:?}", r1, challenge.r1);

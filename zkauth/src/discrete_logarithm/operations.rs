@@ -70,12 +70,12 @@ impl Operations<BigInt, BigInt> for DiscreteLogarithmOperations {
     }
 
     // TODO: rename to compute_r1_prime?
-    fn compute_vr1(&self, y1: BigInt, c: BigInt, s: BigInt) -> BigInt {
+    fn compute_r1_prime(&self, y1: BigInt, c: BigInt, s: BigInt) -> BigInt {
         let one: BigInt = One::one();
         (self.g.modpow(&s, &self.p) * y1.modpow(&c, &self.p)).modpow(&one, &self.p)
     }
 
-    fn compute_vr2(&self, y2: BigInt, c: BigInt, s: BigInt) -> BigInt {
+    fn compute_r2_prime(&self, y2: BigInt, c: BigInt, s: BigInt) -> BigInt {
         let one: BigInt = One::one();
         (self.h.modpow(&s, &self.p) * y2.modpow(&c, &self.p)).modpow(&one, &self.p)
     }

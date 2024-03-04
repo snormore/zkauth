@@ -42,8 +42,8 @@ impl Verifier for EllipticCurveVerifier {
         let y2 = bytes_to_ristretto_point(y2);
         let c = bytes_to_scalar(c);
         let s = bytes_to_scalar(s);
-        let r1 = self.operations.compute_vr1(y1, c.clone(), s.clone());
-        let r2 = self.operations.compute_vr2(y2, c, s);
+        let r1 = self.operations.compute_r1_prime(y1, c.clone(), s.clone());
+        let r2 = self.operations.compute_r2_prime(y2, c, s);
         (ristretto_point_to_bytes(r1), ristretto_point_to_bytes(r2))
     }
 }

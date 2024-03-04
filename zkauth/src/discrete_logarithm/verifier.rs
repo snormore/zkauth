@@ -36,8 +36,8 @@ impl Verifier for DiscreteLogarithmVerifier {
         let c = bytes_to_bigint(c);
         let s = bytes_to_bigint(s);
         // TODO: fix these clones
-        let r1 = self.operations.compute_vr1(y1, c.clone(), s.clone());
-        let r2 = self.operations.compute_vr2(y2, c, s);
+        let r1 = self.operations.compute_r1_prime(y1, c.clone(), s.clone());
+        let r2 = self.operations.compute_r2_prime(y2, c, s);
         (bigint_to_bytes(r1), bigint_to_bytes(r2))
     }
 }
