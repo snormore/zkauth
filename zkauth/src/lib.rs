@@ -1,3 +1,4 @@
+use anyhow::Result;
 use num_bigint::BigInt;
 use std::fmt;
 use std::fmt::Debug;
@@ -12,13 +13,16 @@ pub struct Scalar(pub BigInt);
 #[derive(Debug, PartialEq, PartialOrd, Clone)]
 pub struct Element(pub BigInt);
 
+#[derive(Debug)]
+pub struct ConversionError;
+
 pub trait Prover: Sync + Send + Debug {
     fn generate_registration_x(&self) -> Scalar;
     fn compute_registration_x(&self, password: String) -> Scalar;
-    fn compute_registration_y1y2(&self, x: Scalar) -> (Element, Element);
+    fn compute_registration_y1y2(&self, x: Scalar) -> Result<(Element, Element)>;
     fn generate_challenge_k(&self) -> Scalar;
-    fn compute_challenge_commitment_r1r2(&self, k: Scalar) -> (Element, Element);
-    fn compute_challenge_response_s(&self, x: Scalar, k: Scalar, c: Scalar) -> Scalar;
+    fn compute_challenge_commitment_r1r2(&self, k: Scalar) -> Result<(Element, Element)>;
+    fn compute_challenge_response_s(&self, x: Scalar, k: Scalar, c: Scalar) -> Result<Scalar>;
 }
 
 pub trait Verifier: Sync + Send {
@@ -29,7 +33,7 @@ pub trait Verifier: Sync + Send {
         y2: Element,
         c: Scalar,
         s: Scalar,
-    ) -> (Element, Element);
+    ) -> Result<(Element, Element)>;
 }
 
 impl From<BigInt> for Scalar {
@@ -57,11 +61,10 @@ impl From<Element> for BigInt {
 }
 
 impl FromStr for Scalar {
-    type Err = (); // Replace () with a more appropriate error type
+    type Err = ConversionError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        BigInt::from_str(s).map(Scalar).map_err(|_| ())
-        // Replace () with more appropriate error handling
+        BigInt::from_str(s).map(Scalar).map_err(|_| ConversionError)
     }
 }
 
@@ -72,11 +75,12 @@ impl fmt::Display for Scalar {
 }
 
 impl FromStr for Element {
-    type Err = (); // Replace () with a more appropriate error type
+    type Err = ConversionError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        BigInt::from_str(s).map(Element).map_err(|_| ())
-        // Replace () with more appropriate error handling
+        BigInt::from_str(s)
+            .map(Element)
+            .map_err(|_| ConversionError)
     }
 }
 

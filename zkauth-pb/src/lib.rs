@@ -48,7 +48,6 @@ impl TryFrom<configuration::DiscreteLogarithm> for DiscreteLogarithmConfiguratio
 
     fn try_from(config: configuration::DiscreteLogarithm) -> Result<Self, Self::Error> {
         Ok(DiscreteLogarithmConfiguration {
-            // TODO: make use of Element/Scalar conversion for this instead
             p: config.p.parse().map_err(|_| ConversionError)?,
             q: config.q.parse().map_err(|_| ConversionError)?,
             g: config.g.parse().map_err(|_| ConversionError)?,
@@ -61,18 +60,19 @@ impl TryFrom<configuration::EllipticCurve> for EllipticCurveConfiguration {
     type Error = ConversionError;
 
     fn try_from(config: configuration::EllipticCurve) -> Result<Self, Self::Error> {
-        // TODO: make use of Element conversion for this instead
         Ok(EllipticCurveConfiguration {
             g: config
                 .g
                 .parse::<Element>()
                 .map_err(|_| ConversionError)?
-                .into(),
+                .try_into()
+                .map_err(|_| ConversionError)?,
             h: config
                 .h
                 .parse::<Element>()
                 .map_err(|_| ConversionError)?
-                .into(),
+                .try_into()
+                .map_err(|_| ConversionError)?,
         })
     }
 }

@@ -1,7 +1,7 @@
 use curve25519_dalek::{ristretto::CompressedRistretto, RistrettoPoint, Scalar as DalekScalar};
 use num_bigint::{BigInt, Sign};
 
-use crate::{Element, Scalar};
+use crate::{ConversionError, Element, Scalar};
 
 pub mod configuration;
 pub mod prover;
@@ -12,12 +12,19 @@ fn generate_random_scalar() -> DalekScalar {
     DalekScalar::random(&mut rng)
 }
 
-impl From<Scalar> for DalekScalar {
-    fn from(value: Scalar) -> Self {
+impl TryFrom<Scalar> for DalekScalar {
+    type Error = ConversionError;
+
+    fn try_from(value: Scalar) -> Result<Self, Self::Error> {
         let (_, mut bytes) = value.0.to_bytes_le();
         bytes.resize(32, 0);
-        // TODO: fix these hard unwraps
-        DalekScalar::from_canonical_bytes(bytes.try_into().unwrap()).unwrap()
+        let bytes: [u8; 32] = bytes.try_into().map_err(|_| ConversionError)?;
+        let scalar = DalekScalar::from_canonical_bytes(bytes);
+        if scalar.is_some().into() {
+            Ok(scalar.unwrap())
+        } else {
+            Err(ConversionError)
+        }
     }
 }
 
@@ -28,13 +35,14 @@ impl From<DalekScalar> for Scalar {
     }
 }
 
-impl From<Element> for RistrettoPoint {
-    fn from(value: Element) -> Self {
+impl TryFrom<Element> for RistrettoPoint {
+    type Error = ConversionError;
+
+    fn try_from(value: Element) -> Result<Self, Self::Error> {
         let (_, mut bytes) = value.0.to_bytes_le();
         bytes.resize(32, 0);
-        // TODO: fix these hard unwraps
-        let compressed = CompressedRistretto::from_slice(&bytes).unwrap();
-        compressed.decompress().unwrap()
+        let compressed = CompressedRistretto::from_slice(&bytes).map_err(|_| ConversionError)?;
+        compressed.decompress().ok_or(ConversionError)
     }
 }
 

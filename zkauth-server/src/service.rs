@@ -166,12 +166,10 @@ impl Auth for Service {
             .ok_or_else(|| Status::not_found("User not found"))?;
 
         // Verify and return error if not correct.
-        let (r1, r2) = self.verifier.compute_verification_r1r2(
-            user.y1.clone(),
-            user.y2.clone(),
-            challenge.c,
-            s.clone(),
-        );
+        let (r1, r2) = self
+            .verifier
+            .compute_verification_r1r2(user.y1.clone(), user.y2.clone(), challenge.c, s.clone())
+            .map_err(|_| Status::internal("Failed to compute verification r1r2"))?;
 
         if r1 != challenge.r1 || r2 != challenge.r2 {
             return Err(Status::failed_precondition("Verification failed"));

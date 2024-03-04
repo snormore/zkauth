@@ -14,7 +14,6 @@ use zkauth::elliptic_curve::{
     configuration::EllipticCurveConfiguration, verifier::EllipticCurveVerifier,
 };
 use zkauth_pb::v1::auth_server::AuthServer;
-use zkauth_pb::v1::{configuration, Configuration};
 use zkauth_server::service::Service;
 
 #[derive(Parser, Debug)]
@@ -73,11 +72,11 @@ async fn main() -> Result<()> {
     log::info!("✅ Server listening on {}", listener.local_addr()?);
 
     // TODO: set up configuration/verifier in a better way
-    let config = DiscreteLogarithmConfiguration::generate(opts.prime_bits);
-    let service = Service::new(
-        config.clone().into(),
-        Box::new(DiscreteLogarithmVerifier::new(config)),
-    );
+    // let config = DiscreteLogarithmConfiguration::generate(opts.prime_bits);
+    // let service = Service::new(
+    //     config.clone().into(),
+    //     Box::new(DiscreteLogarithmVerifier::new(config)),
+    // );
 
     let config = EllipticCurveConfiguration::generate(opts.prime_bits);
     let service = Service::new(

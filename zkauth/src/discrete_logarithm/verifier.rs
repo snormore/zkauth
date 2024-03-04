@@ -1,3 +1,4 @@
+use anyhow::Result;
 use num_bigint::BigInt;
 use num_traits::One;
 
@@ -41,11 +42,11 @@ impl Verifier for DiscreteLogarithmVerifier {
         y2: Element,
         c: Scalar,
         s: Scalar,
-    ) -> (Element, Element) {
+    ) -> Result<(Element, Element)> {
         let c: BigInt = c.into();
         let s: BigInt = s.into();
         let r1 = self.compute_r1_prime(y1.into(), c.clone(), s.clone());
         let r2 = self.compute_r2_prime(y2.into(), c, s);
-        (r1.into(), r2.into())
+        Ok((r1.into(), r2.into()))
     }
 }

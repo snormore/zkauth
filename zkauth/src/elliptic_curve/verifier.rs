@@ -1,3 +1,4 @@
+use anyhow::{Error, Result};
 use curve25519_dalek::{RistrettoPoint, Scalar as DalekScalar};
 
 use super::configuration::EllipticCurveConfiguration;
@@ -49,13 +50,21 @@ impl Verifier for EllipticCurveVerifier {
         y2: Element,
         c: Scalar,
         s: Scalar,
-    ) -> (Element, Element) {
-        let y1: RistrettoPoint = y1.into();
-        let y2: RistrettoPoint = y2.into();
-        let c: DalekScalar = c.into();
-        let s: DalekScalar = s.into();
+    ) -> Result<(Element, Element)> {
+        let y1: RistrettoPoint = y1
+            .try_into()
+            .map_err(|_| Error::msg("Failed to convert element y1"))?;
+        let y2: RistrettoPoint = y2
+            .try_into()
+            .map_err(|_| Error::msg("Failed to convert element y2"))?;
+        let c: DalekScalar = c
+            .try_into()
+            .map_err(|_| Error::msg("Failed to convert scalar c"))?;
+        let s: DalekScalar = s
+            .try_into()
+            .map_err(|_| Error::msg("Failed to convert scalar s"))?;
         let r1 = self.compute_r1_prime(y1, c, s);
         let r2 = self.compute_r2_prime(y2, c, s);
-        (r1.into(), r2.into())
+        Ok((r1.into(), r2.into()))
     }
 }

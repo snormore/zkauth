@@ -1,3 +1,4 @@
+use anyhow::{Error, Result};
 use curve25519_dalek::{RistrettoPoint, Scalar as DalekScalar};
 use sha2::{Digest, Sha512};
 
@@ -62,11 +63,13 @@ impl Prover for EllipticCurveProver {
         x.into()
     }
 
-    fn compute_registration_y1y2(&self, x: Scalar) -> (Element, Element) {
-        let x: DalekScalar = x.into();
+    fn compute_registration_y1y2(&self, x: Scalar) -> Result<(Element, Element)> {
+        let x: DalekScalar = x
+            .try_into()
+            .map_err(|_| Error::msg("Failed to convert scalar x"))?;
         let y1 = self.compute_y1(x);
         let y2 = self.compute_y2(x);
-        (y1.into(), y2.into())
+        Ok((y1.into(), y2.into()))
     }
 
     fn generate_challenge_k(&self) -> Scalar {
@@ -74,15 +77,26 @@ impl Prover for EllipticCurveProver {
         c.into()
     }
 
-    fn compute_challenge_commitment_r1r2(&self, k: Scalar) -> (Element, Element) {
-        let k: DalekScalar = k.into();
+    fn compute_challenge_commitment_r1r2(&self, k: Scalar) -> Result<(Element, Element)> {
+        let k: DalekScalar = k
+            .try_into()
+            .map_err(|_| Error::msg("Failed to convert scalar k"))?;
         let r1 = self.compute_r1(k);
         let r2 = self.compute_r2(k);
-        (r1.into(), r2.into())
+        Ok((r1.into(), r2.into()))
     }
 
-    fn compute_challenge_response_s(&self, x: Scalar, k: Scalar, c: Scalar) -> Scalar {
-        let s = self.compute_s(x.into(), k.into(), c.into());
-        s.into()
+    fn compute_challenge_response_s(&self, x: Scalar, k: Scalar, c: Scalar) -> Result<Scalar> {
+        let x = x
+            .try_into()
+            .map_err(|_| Error::msg("Failed to convert scalar x"))?;
+        let k = k
+            .try_into()
+            .map_err(|_| Error::msg("Failed to convert scalar k"))?;
+        let c = c
+            .try_into()
+            .map_err(|_| Error::msg("Failed to convert scalar c"))?;
+        let s = self.compute_s(x, k, c);
+        Ok(s.into())
     }
 }
