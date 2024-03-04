@@ -2,7 +2,7 @@ use num_bigint::BigInt;
 use num_traits::One;
 
 use super::{configuration::DiscreteLogarithmConfiguration, generate_random_scalar};
-use crate::Verifier;
+use crate::{Element, Scalar, Verifier};
 
 pub struct DiscreteLogarithmVerifier {
     config: DiscreteLogarithmConfiguration,
@@ -31,19 +31,21 @@ impl DiscreteLogarithmVerifier {
 }
 
 impl Verifier for DiscreteLogarithmVerifier {
-    fn generate_challenge_c(&self) -> BigInt {
-        self.generate_c()
+    fn generate_challenge_c(&self) -> Scalar {
+        self.generate_c().into()
     }
 
     fn compute_verification_r1r2(
         &self,
-        y1: BigInt,
-        y2: BigInt,
-        c: BigInt,
-        s: BigInt,
-    ) -> (BigInt, BigInt) {
-        let r1 = self.compute_r1_prime(y1, c.clone(), s.clone());
-        let r2 = self.compute_r2_prime(y2, c, s);
-        (r1, r2)
+        y1: Element,
+        y2: Element,
+        c: Scalar,
+        s: Scalar,
+    ) -> (Element, Element) {
+        let c: BigInt = c.into();
+        let s: BigInt = s.into();
+        let r1 = self.compute_r1_prime(y1.into(), c.clone(), s.clone());
+        let r2 = self.compute_r2_prime(y2.into(), c, s);
+        (r1.into(), r2.into())
     }
 }

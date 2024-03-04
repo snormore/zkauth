@@ -2,7 +2,7 @@ use num_bigint::{BigInt, BigUint, RandBigInt, Sign};
 use num_primes::Generator;
 use num_traits::One;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 /// Configuration for the discrete logarithm protocol.
 pub struct DiscreteLogarithmConfiguration {
     pub p: BigInt,

@@ -2122,6 +2122,7 @@ dependencies = [
  "prost",
  "serde",
  "tonic",
+ "zkauth",
 ]
 
 [[package]]

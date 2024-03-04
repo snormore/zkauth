@@ -1,18 +1,17 @@
-use num_bigint::BigInt;
+use std::convert::TryInto;
 use tonic::{transport::Channel, Status};
 use zkauth::{
     discrete_logarithm::{
         configuration::DiscreteLogarithmConfiguration, prover::DiscreteLogarithmProver,
     },
-    elliptic_curve::{
-        bigint_to_ristretto_point, configuration::EllipticCurveConfiguration,
-        prover::EllipticCurveProver,
-    },
-    Prover,
+    elliptic_curve::prover::EllipticCurveProver,
+    Prover, Scalar,
 };
 use zkauth_pb::v1::{
-    auth_client::AuthClient, configuration::Operations, AuthenticationAnswerRequest,
-    AuthenticationChallengeRequest, GetConfigurationRequest, RegisterRequest,
+    auth_client::AuthClient,
+    configuration::{self, Flavor},
+    AuthenticationAnswerRequest, AuthenticationChallengeRequest, Configuration,
+    GetConfigurationRequest, RegisterRequest,
 };
 
 #[derive(Debug)]
@@ -20,7 +19,7 @@ pub struct Client {
     client: AuthClient<Channel>,
     prover: Box<dyn Prover>,
     user: String,
-    x: BigInt,
+    x: Scalar,
 }
 
 impl Client {
@@ -41,24 +40,18 @@ impl Client {
             .get_configuration(GetConfigurationRequest {})
             .await?
             .into_inner();
-        let prover: Box<dyn Prover> = match config.operations {
-            Some(Operations::DiscreteLogarithm(config)) => Box::new(DiscreteLogarithmProver::new(
-                // TODO: do this via into/from
-                DiscreteLogarithmConfiguration {
-                    p: config.p.parse::<BigInt>().unwrap(),
-                    q: config.q.parse::<BigInt>().unwrap(),
-                    g: config.g.parse::<BigInt>().unwrap(),
-                    h: config.h.parse::<BigInt>().unwrap(),
-                },
-            )),
-            Some(Operations::EllipticCurve(config)) => {
-                Box::new(EllipticCurveProver::new(EllipticCurveConfiguration {
-                    // TODO: do this via into/from
-                    g: bigint_to_ristretto_point(config.g.parse::<BigInt>().unwrap()),
-                    h: bigint_to_ristretto_point(config.h.parse::<BigInt>().unwrap()),
-                }))
+        let prover: Box<dyn Prover> = match config.flavor {
+            Some(Flavor::DiscreteLogarithm(config)) => {
+                Box::new(DiscreteLogarithmProver::new(config.try_into().map_err(
+                    |_| Status::internal("failed to convert discrete logarithm configuration"),
+                )?))
             }
-            None => return Err(Status::internal("unknown server configuration")),
+            Some(Flavor::EllipticCurve(config)) => {
+                Box::new(EllipticCurveProver::new(config.try_into().map_err(
+                    |_| Status::internal("failed to convert elliptic curve configuration"),
+                )?))
+            }
+            None => return Err(Status::internal("unknown configuration")),
         };
 
         // Convert password string to x number.
@@ -118,7 +111,8 @@ impl Client {
 
         log::debug!("{:?}", resp);
 
-        let c = resp.c.parse::<BigInt>().unwrap();
+        // TODO: handle hard unwrap
+        let c: Scalar = resp.c.parse().unwrap();
 
         // Compute challenge response s.
         let s = self

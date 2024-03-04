@@ -11,8 +11,7 @@ use zkauth::discrete_logarithm::{
     configuration::DiscreteLogarithmConfiguration, verifier::DiscreteLogarithmVerifier,
 };
 use zkauth::elliptic_curve::{
-    configuration::EllipticCurveConfiguration, ristretto_point_to_bigint,
-    verifier::EllipticCurveVerifier,
+    configuration::EllipticCurveConfiguration, verifier::EllipticCurveVerifier,
 };
 use zkauth_pb::v1::auth_server::AuthServer;
 use zkauth_pb::v1::{configuration, Configuration};
@@ -74,31 +73,17 @@ async fn main() -> Result<()> {
     log::info!("✅ Server listening on {}", listener.local_addr()?);
 
     // TODO: set up configuration/verifier in a better way
-    // let config = DiscreteLogarithmConfiguration::generate(opts.prime_bits);
-    // // TODO: do this via into/from
-    // let config_pb = Configuration {
-    //     operations: Some(configuration::Operations::DiscreteLogarithm(
-    //         configuration::DiscreteLogarithm {
-    //             p: config.p.to_string(),
-    //             q: config.q.to_string(),
-    //             g: config.g.to_string(),
-    //             h: config.h.to_string(),
-    //         },
-    //     )),
-    // };
-    // let service = Service::new(config_pb, Box::new(DiscreteLogarithmVerifier::new(config)));
+    let config = DiscreteLogarithmConfiguration::generate(opts.prime_bits);
+    let service = Service::new(
+        config.clone().into(),
+        Box::new(DiscreteLogarithmVerifier::new(config)),
+    );
 
     let config = EllipticCurveConfiguration::generate(opts.prime_bits);
-    // TODO: do this via into/from
-    let config_pb = Configuration {
-        operations: Some(configuration::Operations::EllipticCurve(
-            configuration::EllipticCurve {
-                g: ristretto_point_to_bigint(config.g).to_string(),
-                h: ristretto_point_to_bigint(config.h).to_string(),
-            },
-        )),
-    };
-    let service = Service::new(config_pb, Box::new(EllipticCurveVerifier::new(config)));
+    let service = Service::new(
+        config.clone().into(),
+        Box::new(EllipticCurveVerifier::new(config)),
+    );
 
     let server = Server::builder()
         .add_service(AuthServer::new(service))

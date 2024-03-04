@@ -1,35 +1,46 @@
-use curve25519_dalek::{ristretto::CompressedRistretto, RistrettoPoint, Scalar};
+use curve25519_dalek::{ristretto::CompressedRistretto, RistrettoPoint, Scalar as DalekScalar};
 use num_bigint::{BigInt, Sign};
+
+use crate::{Element, Scalar};
 
 pub mod configuration;
 pub mod prover;
 pub mod verifier;
 
-fn generate_random_scalar() -> Scalar {
+fn generate_random_scalar() -> DalekScalar {
     let mut rng = rand::thread_rng();
-    Scalar::random(&mut rng)
+    DalekScalar::random(&mut rng)
 }
 
-// TODO: convert these to from/into via custom type if necessary
-fn bigint_to_scalar(v: BigInt) -> Scalar {
-    let (_, mut bytes) = v.to_bytes_le();
-    bytes.resize(32, 0);
-    Scalar::from_canonical_bytes(bytes.try_into().unwrap()).unwrap()
+impl From<Scalar> for DalekScalar {
+    fn from(value: Scalar) -> Self {
+        let (_, mut bytes) = value.0.to_bytes_le();
+        bytes.resize(32, 0);
+        // TODO: fix these hard unwraps
+        DalekScalar::from_canonical_bytes(bytes.try_into().unwrap()).unwrap()
+    }
 }
 
-fn scalar_to_bigint(v: Scalar) -> BigInt {
-    let v = v.to_bytes();
-    BigInt::from_bytes_le(Sign::Plus, &v)
+impl From<DalekScalar> for Scalar {
+    fn from(value: DalekScalar) -> Self {
+        let v = value.to_bytes();
+        Scalar(BigInt::from_bytes_le(Sign::Plus, &v))
+    }
 }
 
-pub fn bigint_to_ristretto_point(v: BigInt) -> RistrettoPoint {
-    let (_, mut bytes) = v.to_bytes_le();
-    bytes.resize(32, 0);
-    let compressed = CompressedRistretto::from_slice(&bytes).unwrap();
-    compressed.decompress().unwrap()
+impl From<Element> for RistrettoPoint {
+    fn from(value: Element) -> Self {
+        let (_, mut bytes) = value.0.to_bytes_le();
+        bytes.resize(32, 0);
+        // TODO: fix these hard unwraps
+        let compressed = CompressedRistretto::from_slice(&bytes).unwrap();
+        compressed.decompress().unwrap()
+    }
 }
 
-pub fn ristretto_point_to_bigint(v: RistrettoPoint) -> BigInt {
-    let v = v.compress().to_bytes();
-    BigInt::from_bytes_le(Sign::Plus, &v)
+impl From<RistrettoPoint> for Element {
+    fn from(value: RistrettoPoint) -> Self {
+        let v = value.compress().to_bytes();
+        Element(BigInt::from_bytes_le(Sign::Plus, &v))
+    }
 }

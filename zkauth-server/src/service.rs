@@ -1,10 +1,9 @@
 use dashmap::DashMap;
 use moka::sync::Cache;
-use num_bigint::BigInt;
 use std::time::Duration;
 use tonic::{Request, Response, Status};
 use uuid::Uuid;
-use zkauth::Verifier;
+use zkauth::{Element, Scalar, Verifier};
 use zkauth_pb::v1::{
     auth_server::Auth, AuthenticationAnswerRequest, AuthenticationAnswerResponse,
     AuthenticationChallengeRequest, AuthenticationChallengeResponse, Configuration,
@@ -13,16 +12,16 @@ use zkauth_pb::v1::{
 
 #[derive(Debug)]
 struct User {
-    y1: BigInt,
-    y2: BigInt,
+    y1: Element,
+    y2: Element,
 }
 
 #[derive(Debug, Clone)]
 struct Challenge {
     user: String,
-    c: BigInt,
-    r1: BigInt,
-    r2: BigInt,
+    c: Scalar,
+    r1: Element,
+    r2: Element,
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -73,14 +72,14 @@ impl Auth for Service {
             return Err(Status::invalid_argument("Invalid user argument"));
         }
 
-        let y1 = request
+        let y1: Element = request
             .y1
-            .parse::<BigInt>()
+            .parse()
             .map_err(|_| tonic::Status::invalid_argument("Invalid y1 argument"))?;
 
-        let y2 = request
+        let y2: Element = request
             .y2
-            .parse::<BigInt>()
+            .parse()
             .map_err(|_| tonic::Status::invalid_argument("Invalid y2 argument"))?;
 
         if self.users.get(&request.user).is_some() {
@@ -104,13 +103,13 @@ impl Auth for Service {
             return Err(Status::invalid_argument("Invalid user argument"));
         }
 
-        let r1 = request
+        let r1: Element = request
             .r1
-            .parse::<BigInt>()
+            .parse()
             .map_err(|_| tonic::Status::invalid_argument("Invalid r1 argument"))?;
-        let r2 = request
+        let r2: Element = request
             .r2
-            .parse::<BigInt>()
+            .parse()
             .map_err(|_| tonic::Status::invalid_argument("Invalid r2 argument"))?;
 
         if self.users.get(&request.user).is_none() {
@@ -147,9 +146,9 @@ impl Auth for Service {
     ) -> Result<Response<AuthenticationAnswerResponse>, Status> {
         let request = request.into_inner();
 
-        let s = request
+        let s: Scalar = request
             .s
-            .parse::<BigInt>()
+            .parse()
             .map_err(|_| tonic::Status::invalid_argument("Invalid s argument"))?;
 
         if request.auth_id.is_empty() {

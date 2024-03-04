@@ -43,7 +43,7 @@ message Configuration {
     string h = 2;
   }
 
-  oneof operations {
+  oneof flavor {
     DiscreteLogarithm discrete_logarithm = 1;
     EllipticCurve elliptic_curve = 2;
   }

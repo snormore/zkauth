@@ -442,16 +442,16 @@ impl serde::Serialize for Configuration {
     {
         use serde::ser::SerializeStruct;
         let mut len = 0;
-        if self.operations.is_some() {
+        if self.flavor.is_some() {
             len += 1;
         }
         let mut struct_ser = serializer.serialize_struct("zkauth.v1.Configuration", len)?;
-        if let Some(v) = self.operations.as_ref() {
+        if let Some(v) = self.flavor.as_ref() {
             match v {
-                configuration::Operations::DiscreteLogarithm(v) => {
+                configuration::Flavor::DiscreteLogarithm(v) => {
                     struct_ser.serialize_field("discreteLogarithm", v)?;
                 }
-                configuration::Operations::EllipticCurve(v) => {
+                configuration::Flavor::EllipticCurve(v) => {
                     struct_ser.serialize_field("ellipticCurve", v)?;
                 }
             }
@@ -518,27 +518,27 @@ impl<'de> serde::Deserialize<'de> for Configuration {
                 where
                     V: serde::de::MapAccess<'de>,
             {
-                let mut operations__ = None;
+                let mut flavor__ = None;
                 while let Some(k) = map_.next_key()? {
                     match k {
                         GeneratedField::DiscreteLogarithm => {
-                            if operations__.is_some() {
+                            if flavor__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("discreteLogarithm"));
                             }
-                            operations__ = map_.next_value::<::std::option::Option<_>>()?.map(configuration::Operations::DiscreteLogarithm)
+                            flavor__ = map_.next_value::<::std::option::Option<_>>()?.map(configuration::Flavor::DiscreteLogarithm)
 ;
                         }
                         GeneratedField::EllipticCurve => {
-                            if operations__.is_some() {
+                            if flavor__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("ellipticCurve"));
                             }
-                            operations__ = map_.next_value::<::std::option::Option<_>>()?.map(configuration::Operations::EllipticCurve)
+                            flavor__ = map_.next_value::<::std::option::Option<_>>()?.map(configuration::Flavor::EllipticCurve)
 ;
                         }
                     }
                 }
                 Ok(Configuration {
-                    operations: operations__,
+                    flavor: flavor__,
                 })
             }
         }

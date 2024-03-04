@@ -1,7 +1,7 @@
 use curve25519_dalek::{constants::RISTRETTO_BASEPOINT_POINT, RistrettoPoint, Scalar};
 use sha2::{Digest, Sha512};
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 /// Configuration for the discrete logarithm protocol.
 pub struct EllipticCurveConfiguration {
     pub g: RistrettoPoint,
