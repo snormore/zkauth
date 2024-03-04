@@ -1,8 +1,11 @@
-use anyhow::Result;
-use clap::Parser;
+use anyhow::{Error, Result};
+use clap::{Parser, ValueEnum};
 use clap_verbosity_flag::{InfoLevel, Verbosity};
 use env_logger::Env;
 use futures_util::FutureExt;
+use std::fs::File;
+use std::path::Path;
+use strum_macros::{Display, EnumString, VariantNames};
 use tokio::net::TcpListener;
 use tokio::signal;
 use tokio::sync::oneshot;
@@ -13,7 +16,9 @@ use zkauth::discrete_logarithm::{
 use zkauth::elliptic_curve::{
     configuration::EllipticCurveConfiguration, verifier::EllipticCurveVerifier,
 };
+use zkauth::Verifier;
 use zkauth_pb::v1::auth_server::AuthServer;
+use zkauth_pb::v1::{configuration::Flavor, Configuration};
 use zkauth_server::service::Service;
 
 #[derive(Parser, Debug)]
@@ -33,6 +38,33 @@ pub struct Options {
     /// Specifies the number of bits to use for generating prime numbers for the public parameters.
     #[arg(long, default_value_t = 128)]
     prime_bits: usize,
+
+    /// Specifies the configuration file path.
+    /// If not specified, a non-persistent configuration will be generated and used.
+    #[arg(long, env("CONFIG_PATH"))]
+    config_path: Option<String>,
+
+    /// Specifies whether to generate a new configuration file at the specified path.
+    /// If true, this will exit after generating the configuration file, and not run the server.
+    /// If the file already exists, it will not be overwritten unless the --config-overwrite is
+    /// specified.
+    #[arg(long, default_value_t = false)]
+    config_generate: bool,
+
+    /// Specifies whether to overwrite an existing configuration file when generating a new one.
+    #[arg(long, default_value_t = false)]
+    config_overwrite: bool,
+
+    /// Specifies the configuration flavor to use.
+    #[arg(long, default_value_t = ConfigFlavor::DiscreteLogarithm, value_enum)]
+    config_flavor: ConfigFlavor,
+}
+
+#[derive(Debug, Clone, EnumString, Display, VariantNames, ValueEnum)]
+#[strum(serialize_all = "kebab-case")]
+enum ConfigFlavor {
+    DiscreteLogarithm,
+    EllipticCurve,
 }
 
 impl Options {
@@ -51,6 +83,85 @@ impl Options {
 async fn main() -> Result<()> {
     let opts = Options::parse();
     opts.init_logger();
+
+    // Check if a configuration file should be generated.
+    let config_path = opts.config_path.clone().unwrap_or("".to_string());
+    if opts.config_generate {
+        if opts.config_path.is_none() {
+            log::error!("Configuration file path is required when using --config-generate.");
+            return Ok(());
+        }
+
+        if Path::new(config_path.as_str()).exists() && !opts.config_overwrite {
+            log::error!(
+                "Configuration file already exists at '{}'. Use --config-overwrite to overwrite.",
+                config_path
+            );
+            return Ok(());
+        } else {
+            if opts.config_overwrite {
+                log::warn!("Overwriting configuration file at '{}'.", config_path);
+            }
+
+            // Generate a new configuration file and exit.
+            let config: Configuration = match opts.config_flavor {
+                ConfigFlavor::DiscreteLogarithm => {
+                    let config = DiscreteLogarithmConfiguration::generate(opts.prime_bits);
+                    config.into()
+                }
+                ConfigFlavor::EllipticCurve => {
+                    let config = EllipticCurveConfiguration::generate(opts.prime_bits);
+                    config.into()
+                }
+            };
+            serde_json::to_writer_pretty(File::create(config_path.as_str())?, &config)?;
+            log::info!("Configuration file generated at '{}'.", config_path);
+            return Ok(());
+        }
+    }
+
+    // Load configuration from file if specified.
+    let config: Configuration = if opts.config_path.is_some() {
+        if !Path::new(config_path.as_str()).exists() {
+            log::error!("Configuration file not found at '{}'.", config_path);
+            return Ok(());
+        }
+
+        let file = File::open(config_path.clone())?;
+        let config: Configuration = serde_json::from_reader(file)?;
+        log::info!("Configuration loaded from '{}'.", config_path);
+        let config_json = serde_json::to_string_pretty(&config).map_err(|e| {
+            log::error!("Failed to serialize configuration: {}", e);
+            e
+        })?;
+        println!("{}", config_json);
+
+        serde_json::from_str(&config_json)?
+    } else {
+        log::info!("No configuration file specified, generating non-persistent configuration.");
+        match opts.config_flavor {
+            ConfigFlavor::EllipticCurve => {
+                let config = EllipticCurveConfiguration::generate(opts.prime_bits);
+                let config = config.into();
+                let config_json = serde_json::to_string_pretty(&config).map_err(|e| {
+                    log::error!("Failed to serialize configuration: {}", e);
+                    e
+                })?;
+                println!("{}", config_json);
+                config
+            }
+            _ => {
+                let config = DiscreteLogarithmConfiguration::generate(opts.prime_bits);
+                let config = config.into();
+                let config_json = serde_json::to_string_pretty(&config).map_err(|e| {
+                    log::error!("Failed to serialize configuration: {}", e);
+                    e
+                })?;
+                println!("{}", config_json);
+                config
+            }
+        }
+    };
 
     // Create a channel to signal shutdown.
     let (shutdown_sender, shutdown_receiver) = oneshot::channel();
@@ -71,19 +182,23 @@ async fn main() -> Result<()> {
     let listener = TcpListener::bind(addr).await?;
     log::info!("✅ Server listening on {}", listener.local_addr()?);
 
-    // TODO: set up configuration/verifier in a better way
-    // let config = DiscreteLogarithmConfiguration::generate(opts.prime_bits);
-    // let service = Service::new(
-    //     config.clone().into(),
-    //     Box::new(DiscreteLogarithmVerifier::new(config)),
-    // );
+    // Initialize the service verifier.
+    let verifier: Box<dyn Verifier> = match config.clone().flavor {
+        Some(Flavor::DiscreteLogarithm(config)) => {
+            Box::new(DiscreteLogarithmVerifier::new(config.try_into().map_err(
+                |_| Error::msg("Failed to convert discrete logarithm configuration"),
+            )?))
+        }
+        Some(Flavor::EllipticCurve(config)) => {
+            Box::new(EllipticCurveVerifier::new(config.try_into().map_err(
+                |_| Error::msg("Failed to convert elliptic curve configuration"),
+            )?))
+        }
+        None => return Err(Error::msg("unknown configuration")),
+    };
 
-    let config = EllipticCurveConfiguration::generate(opts.prime_bits);
-    let service = Service::new(
-        config.clone().into(),
-        Box::new(EllipticCurveVerifier::new(config)),
-    );
-
+    // Initialize service and start the server.
+    let service = Service::new(config, verifier);
     let server = Server::builder()
         .add_service(AuthServer::new(service))
         .serve_with_incoming_shutdown(
