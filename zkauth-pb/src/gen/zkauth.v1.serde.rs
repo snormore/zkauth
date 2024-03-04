@@ -18,8 +18,7 @@ impl serde::Serialize for AuthenticationAnswerRequest {
             struct_ser.serialize_field("authId", &self.auth_id)?;
         }
         if !self.s.is_empty() {
-            #[allow(clippy::needless_borrow)]
-            struct_ser.serialize_field("s", pbjson::private::base64::encode(&self.s).as_str())?;
+            struct_ser.serialize_field("s", &self.s)?;
         }
         struct_ser.end()
     }
@@ -96,9 +95,7 @@ impl<'de> serde::Deserialize<'de> for AuthenticationAnswerRequest {
                             if s__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("s"));
                             }
-                            s__ = 
-                                Some(map_.next_value::<::pbjson::private::BytesDeserialize<_>>()?.0)
-                            ;
+                            s__ = Some(map_.next_value()?);
                         }
                     }
                 }
@@ -225,12 +222,10 @@ impl serde::Serialize for AuthenticationChallengeRequest {
             struct_ser.serialize_field("user", &self.user)?;
         }
         if !self.r1.is_empty() {
-            #[allow(clippy::needless_borrow)]
-            struct_ser.serialize_field("r1", pbjson::private::base64::encode(&self.r1).as_str())?;
+            struct_ser.serialize_field("r1", &self.r1)?;
         }
         if !self.r2.is_empty() {
-            #[allow(clippy::needless_borrow)]
-            struct_ser.serialize_field("r2", pbjson::private::base64::encode(&self.r2).as_str())?;
+            struct_ser.serialize_field("r2", &self.r2)?;
         }
         struct_ser.end()
     }
@@ -310,17 +305,13 @@ impl<'de> serde::Deserialize<'de> for AuthenticationChallengeRequest {
                             if r1__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("r1"));
                             }
-                            r1__ = 
-                                Some(map_.next_value::<::pbjson::private::BytesDeserialize<_>>()?.0)
-                            ;
+                            r1__ = Some(map_.next_value()?);
                         }
                         GeneratedField::R2 => {
                             if r2__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("r2"));
                             }
-                            r2__ = 
-                                Some(map_.next_value::<::pbjson::private::BytesDeserialize<_>>()?.0)
-                            ;
+                            r2__ = Some(map_.next_value()?);
                         }
                     }
                 }
@@ -353,8 +344,7 @@ impl serde::Serialize for AuthenticationChallengeResponse {
             struct_ser.serialize_field("authId", &self.auth_id)?;
         }
         if !self.c.is_empty() {
-            #[allow(clippy::needless_borrow)]
-            struct_ser.serialize_field("c", pbjson::private::base64::encode(&self.c).as_str())?;
+            struct_ser.serialize_field("c", &self.c)?;
         }
         struct_ser.end()
     }
@@ -431,9 +421,7 @@ impl<'de> serde::Deserialize<'de> for AuthenticationChallengeResponse {
                             if c__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("c"));
                             }
-                            c__ = 
-                                Some(map_.next_value::<::pbjson::private::BytesDeserialize<_>>()?.0)
-                            ;
+                            c__ = Some(map_.next_value()?);
                         }
                     }
                 }
@@ -579,20 +567,16 @@ impl serde::Serialize for configuration::DiscreteLogarithm {
         }
         let mut struct_ser = serializer.serialize_struct("zkauth.v1.Configuration.DiscreteLogarithm", len)?;
         if !self.p.is_empty() {
-            #[allow(clippy::needless_borrow)]
-            struct_ser.serialize_field("p", pbjson::private::base64::encode(&self.p).as_str())?;
+            struct_ser.serialize_field("p", &self.p)?;
         }
         if !self.q.is_empty() {
-            #[allow(clippy::needless_borrow)]
-            struct_ser.serialize_field("q", pbjson::private::base64::encode(&self.q).as_str())?;
+            struct_ser.serialize_field("q", &self.q)?;
         }
         if !self.g.is_empty() {
-            #[allow(clippy::needless_borrow)]
-            struct_ser.serialize_field("g", pbjson::private::base64::encode(&self.g).as_str())?;
+            struct_ser.serialize_field("g", &self.g)?;
         }
         if !self.h.is_empty() {
-            #[allow(clippy::needless_borrow)]
-            struct_ser.serialize_field("h", pbjson::private::base64::encode(&self.h).as_str())?;
+            struct_ser.serialize_field("h", &self.h)?;
         }
         struct_ser.end()
     }
@@ -670,33 +654,25 @@ impl<'de> serde::Deserialize<'de> for configuration::DiscreteLogarithm {
                             if p__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("p"));
                             }
-                            p__ = 
-                                Some(map_.next_value::<::pbjson::private::BytesDeserialize<_>>()?.0)
-                            ;
+                            p__ = Some(map_.next_value()?);
                         }
                         GeneratedField::Q => {
                             if q__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("q"));
                             }
-                            q__ = 
-                                Some(map_.next_value::<::pbjson::private::BytesDeserialize<_>>()?.0)
-                            ;
+                            q__ = Some(map_.next_value()?);
                         }
                         GeneratedField::G => {
                             if g__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("g"));
                             }
-                            g__ = 
-                                Some(map_.next_value::<::pbjson::private::BytesDeserialize<_>>()?.0)
-                            ;
+                            g__ = Some(map_.next_value()?);
                         }
                         GeneratedField::H => {
                             if h__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("h"));
                             }
-                            h__ = 
-                                Some(map_.next_value::<::pbjson::private::BytesDeserialize<_>>()?.0)
-                            ;
+                            h__ = Some(map_.next_value()?);
                         }
                     }
                 }
@@ -727,12 +703,10 @@ impl serde::Serialize for configuration::EllipticCurve {
         }
         let mut struct_ser = serializer.serialize_struct("zkauth.v1.Configuration.EllipticCurve", len)?;
         if !self.g.is_empty() {
-            #[allow(clippy::needless_borrow)]
-            struct_ser.serialize_field("g", pbjson::private::base64::encode(&self.g).as_str())?;
+            struct_ser.serialize_field("g", &self.g)?;
         }
         if !self.h.is_empty() {
-            #[allow(clippy::needless_borrow)]
-            struct_ser.serialize_field("h", pbjson::private::base64::encode(&self.h).as_str())?;
+            struct_ser.serialize_field("h", &self.h)?;
         }
         struct_ser.end()
     }
@@ -802,17 +776,13 @@ impl<'de> serde::Deserialize<'de> for configuration::EllipticCurve {
                             if g__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("g"));
                             }
-                            g__ = 
-                                Some(map_.next_value::<::pbjson::private::BytesDeserialize<_>>()?.0)
-                            ;
+                            g__ = Some(map_.next_value()?);
                         }
                         GeneratedField::H => {
                             if h__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("h"));
                             }
-                            h__ = 
-                                Some(map_.next_value::<::pbjson::private::BytesDeserialize<_>>()?.0)
-                            ;
+                            h__ = Some(map_.next_value()?);
                         }
                     }
                 }
@@ -918,12 +888,10 @@ impl serde::Serialize for RegisterRequest {
             struct_ser.serialize_field("user", &self.user)?;
         }
         if !self.y1.is_empty() {
-            #[allow(clippy::needless_borrow)]
-            struct_ser.serialize_field("y1", pbjson::private::base64::encode(&self.y1).as_str())?;
+            struct_ser.serialize_field("y1", &self.y1)?;
         }
         if !self.y2.is_empty() {
-            #[allow(clippy::needless_borrow)]
-            struct_ser.serialize_field("y2", pbjson::private::base64::encode(&self.y2).as_str())?;
+            struct_ser.serialize_field("y2", &self.y2)?;
         }
         struct_ser.end()
     }
@@ -1003,17 +971,13 @@ impl<'de> serde::Deserialize<'de> for RegisterRequest {
                             if y1__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("y1"));
                             }
-                            y1__ = 
-                                Some(map_.next_value::<::pbjson::private::BytesDeserialize<_>>()?.0)
-                            ;
+                            y1__ = Some(map_.next_value()?);
                         }
                         GeneratedField::Y2 => {
                             if y2__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("y2"));
                             }
-                            y2__ = 
-                                Some(map_.next_value::<::pbjson::private::BytesDeserialize<_>>()?.0)
-                            ;
+                            y2__ = Some(map_.next_value()?);
                         }
                     }
                 }

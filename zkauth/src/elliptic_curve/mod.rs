@@ -1,36 +1,30 @@
-use bytes::Bytes;
 use curve25519_dalek::{ristretto::CompressedRistretto, RistrettoPoint, Scalar};
+use num_bigint::{BigInt, Sign};
 
 pub mod prover;
 pub mod verifier;
 
 mod operations;
 
-fn bytes_to_scalar(v: Bytes) -> Scalar {
-    // if x.len() != 32 {}
-    // TODO: make sure length is 32
-    // TODO: fix these hard unwraps
-    let v = &v[..];
-    let v = v.try_into().unwrap();
-    let v = Scalar::from_canonical_bytes(v).unwrap();
-    v
+fn bigint_to_scalar(v: BigInt) -> Scalar {
+    let (_, mut bytes) = v.to_bytes_le();
+    bytes.resize(32, 0);
+    Scalar::from_canonical_bytes(bytes.try_into().unwrap()).unwrap()
 }
 
-fn scalar_to_bytes(v: Scalar) -> Bytes {
+fn scalar_to_bigint(v: Scalar) -> BigInt {
     let v = v.to_bytes();
-    Bytes::copy_from_slice(&v)
+    BigInt::from_bytes_le(Sign::Plus, &v)
 }
 
-fn bytes_to_ristretto_point(v: Bytes) -> RistrettoPoint {
-    // if x.len() != 32 {}
-    // TODO: make sure length is 32
-    // TODO: fix these hard unwraps
-    let v: [u8; 32] = v.as_ref().try_into().unwrap();
-    let v = CompressedRistretto(v).decompress().unwrap();
-    v
+pub fn bigint_to_ristretto_point(v: BigInt) -> RistrettoPoint {
+    let (_, mut bytes) = v.to_bytes_le();
+    bytes.resize(32, 0);
+    let compressed = CompressedRistretto::from_slice(&bytes).unwrap();
+    compressed.decompress().unwrap()
 }
 
-fn ristretto_point_to_bytes(v: RistrettoPoint) -> Bytes {
+pub fn ristretto_point_to_bigint(v: RistrettoPoint) -> BigInt {
     let v = v.compress().to_bytes();
-    Bytes::copy_from_slice(&v)
+    BigInt::from_bytes_le(Sign::Plus, &v)
 }

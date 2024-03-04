@@ -1,15 +1,12 @@
-use bytes::Bytes;
 use curve25519_dalek::constants::RISTRETTO_BASEPOINT_POINT;
 use curve25519_dalek::RistrettoPoint;
 use curve25519_dalek::Scalar;
-use rand::rngs::OsRng;
+use num_bigint::BigInt;
 use sha2::{Digest, Sha512};
 
-use super::bytes_to_ristretto_point;
-use super::bytes_to_scalar;
 use super::operations::EllipticCurveOperations;
-use super::ristretto_point_to_bytes;
-use super::scalar_to_bytes;
+use super::scalar_to_bigint;
+use super::{bigint_to_ristretto_point, bigint_to_scalar, ristretto_point_to_bigint};
 use crate::Operations;
 use crate::Verifier;
 
@@ -26,41 +23,39 @@ impl EllipticCurveVerifier {
 }
 
 impl Verifier for EllipticCurveVerifier {
-    fn generate_challenge_c(&self) -> Bytes {
+    fn generate_challenge_c(&self) -> BigInt {
         let c = self.operations.generate_c();
-        scalar_to_bytes(c)
+        scalar_to_bigint(c)
     }
 
     fn compute_verification_r1r2(
         &self,
-        y1: Bytes,
-        y2: Bytes,
-        c: Bytes,
-        s: Bytes,
-    ) -> (Bytes, Bytes) {
-        let y1 = bytes_to_ristretto_point(y1);
-        let y2 = bytes_to_ristretto_point(y2);
-        let c = bytes_to_scalar(c);
-        let s = bytes_to_scalar(s);
+        y1: BigInt,
+        y2: BigInt,
+        c: BigInt,
+        s: BigInt,
+    ) -> (BigInt, BigInt) {
+        let y1 = bigint_to_ristretto_point(y1);
+        let y2 = bigint_to_ristretto_point(y2);
+        let c = bigint_to_scalar(c);
+        let s = bigint_to_scalar(s);
         let r1 = self.operations.compute_r1_prime(y1, c.clone(), s.clone());
         let r2 = self.operations.compute_r2_prime(y2, c, s);
-        (ristretto_point_to_bytes(r1), ristretto_point_to_bytes(r2))
+        (ristretto_point_to_bigint(r1), ristretto_point_to_bigint(r2))
     }
 }
 
 pub fn generate_parameters() -> (RistrettoPoint, RistrettoPoint) {
-    // TODO: clean this up
     let g = RISTRETTO_BASEPOINT_POINT;
 
     let h_value = "Unique value for H";
     let mut hasher = Sha512::new();
     hasher.update(h_value.as_bytes());
     let h_result = hasher.finalize();
-    let h_bytes: [u8; 64] = *h_result.as_ref();
-    let h = RistrettoPoint::from_uniform_bytes(&h_bytes);
+    let h_bigint: [u8; 64] = *h_result.as_ref();
+    let h = RistrettoPoint::from_uniform_bytes(&h_bigint);
 
-    // TODO: use threadrng here instead
-    let mut rng = OsRng;
+    let mut rng = rand::thread_rng();
     let secret = Scalar::random(&mut rng);
     let point_g = g * secret;
     let point_h = h * secret;

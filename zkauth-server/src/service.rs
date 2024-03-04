@@ -1,6 +1,6 @@
-use bytes::Bytes;
 use dashmap::DashMap;
 use moka::sync::Cache;
+use num_bigint::BigInt;
 use std::time::Duration;
 use tonic::{Request, Response, Status};
 use uuid::Uuid;
@@ -13,16 +13,16 @@ use zkauth_pb::v1::{
 
 #[derive(Debug)]
 struct User {
-    y1: Bytes,
-    y2: Bytes,
+    y1: BigInt,
+    y2: BigInt,
 }
 
 #[derive(Debug, Clone)]
 struct Challenge {
     user: String,
-    c: Bytes,
-    r1: Bytes,
-    r2: Bytes,
+    c: BigInt,
+    r1: BigInt,
+    r2: BigInt,
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -52,18 +52,7 @@ impl Service {
                 .build(),
         }
     }
-
-    // TODO: this
-    // pub fn generated(prime_bits: usize) -> Self {
-    //     Self::new(generate_parameters(prime_bits))
-    // }
 }
-
-// impl Default for Service {
-//     fn default() -> Self {
-//         Self::new()
-//     }
-// }
 
 #[tonic::async_trait]
 impl Auth for Service {
@@ -84,18 +73,15 @@ impl Auth for Service {
             return Err(Status::invalid_argument("Invalid user argument"));
         }
 
-        let y1 = Bytes::from(request.y1);
-        let y2 = Bytes::from(request.y2);
+        let y1 = request
+            .y1
+            .parse::<BigInt>()
+            .map_err(|_| tonic::Status::invalid_argument("Invalid y1 argument"))?;
 
-        // let y1 = request
-        //     .y1
-        //     .parse::<Bytes>()
-        //     .map_err(|_| tonic::Status::invalid_argument("Invalid y1 argument"))?;
-
-        // let y2 = request
-        //     .y2
-        //     .parse::<Bytes>()
-        //     .map_err(|_| tonic::Status::invalid_argument("Invalid y2 argument"))?;
+        let y2 = request
+            .y2
+            .parse::<BigInt>()
+            .map_err(|_| tonic::Status::invalid_argument("Invalid y2 argument"))?;
 
         if self.users.get(&request.user).is_some() {
             return Err(Status::already_exists("User already registered"));
@@ -118,26 +104,20 @@ impl Auth for Service {
             return Err(Status::invalid_argument("Invalid user argument"));
         }
 
-        let r1 = Bytes::from(request.r1);
-        let r2 = Bytes::from(request.r2);
-
-        // let r1 = request
-        //     .r1
-        //     .parse::<BigInt>()
-        //     .map_err(|_| tonic::Status::invalid_argument("Invalid r1 argument"))?;
-        // let r2 = request
-        //     .r2
-        //     .parse::<BigInt>()
-        //     .map_err(|_| tonic::Status::invalid_argument("Invalid r2 argument"))?;
+        let r1 = request
+            .r1
+            .parse::<BigInt>()
+            .map_err(|_| tonic::Status::invalid_argument("Invalid r1 argument"))?;
+        let r2 = request
+            .r2
+            .parse::<BigInt>()
+            .map_err(|_| tonic::Status::invalid_argument("Invalid r2 argument"))?;
 
         if self.users.get(&request.user).is_none() {
             return Err(Status::not_found("User not found"));
         }
 
         // Generate random challenge number c.
-        // Should not be negative because it's used as an exponent.
-        // let mut rng = rand::thread_rng();
-        // let c: BigUint = rng.sample(RandomBits::new(32));
         let c = self.verifier.generate_challenge_c();
         log::info!("c = {:?}", c);
 
@@ -155,7 +135,7 @@ impl Auth for Service {
 
         Ok(Response::new(AuthenticationChallengeResponse {
             auth_id,
-            c,
+            c: c.to_string(),
         }))
     }
 
@@ -167,11 +147,10 @@ impl Auth for Service {
     ) -> Result<Response<AuthenticationAnswerResponse>, Status> {
         let request = request.into_inner();
 
-        let s = Bytes::from(request.s);
-        // let s = request
-        //     .s
-        //     .parse::<BigInt>()
-        //     .map_err(|_| tonic::Status::invalid_argument("Invalid s argument"))?;
+        let s = request
+            .s
+            .parse::<BigInt>()
+            .map_err(|_| tonic::Status::invalid_argument("Invalid s argument"))?;
 
         if request.auth_id.is_empty() {
             return Err(Status::invalid_argument("Invalid auth_id argument"));
@@ -194,21 +173,12 @@ impl Auth for Service {
             challenge.c,
             s.clone(),
         );
-        // let c: BigInt = challenge.c.clone().into();
-        // let r1 = self
-        //     .operations
-        //     .compute_r1_prime(user.y1.clone(), c.clone(), s.clone());
-        // let r2 = self
-        //     .operations
-        //     .compute_r2_prime(user.y1.clone(), c.clone(), s.clone());
 
         if r1 != challenge.r1 || r2 != challenge.r2 {
-            // log::info!("r1: {:?} != {:?}", r1, challenge.r1);
-            // log::info!("r2: {:?} != {:?}", r2, challenge.r2);
             return Err(Status::failed_precondition("Verification failed"));
         }
 
-        let session_key = hex::encode(s);
+        let session_key = s.to_string();
         let session = match self.sessions.get(&session_key) {
             None => {
                 let session = Session { id: Uuid::new_v4() };

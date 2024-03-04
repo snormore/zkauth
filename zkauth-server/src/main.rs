@@ -11,8 +11,8 @@ use tokio::signal;
 use tokio::sync::oneshot;
 use tonic::transport::Server;
 use zkauth::discrete_logarithm::verifier::{default_parameters, DiscreteLogarithmVerifier};
-use zkauth::elliptic_curve;
 use zkauth::elliptic_curve::verifier::EllipticCurveVerifier;
+use zkauth::elliptic_curve::{self, ristretto_point_to_bigint};
 use zkauth_pb::v1::auth_server::AuthServer;
 use zkauth_pb::v1::{configuration, Configuration};
 use zkauth_server::service::Service;
@@ -77,10 +77,10 @@ async fn main() -> Result<()> {
     //     Configuration {
     //         operations: Some(configuration::Operations::DiscreteLogarithm(
     //             configuration::DiscreteLogarithm {
-    //                 p: bigint_to_bytes(p.clone()),
-    //                 q: bigint_to_bytes(q.clone()),
-    //                 g: bigint_to_bytes(g.clone()),
-    //                 h: bigint_to_bytes(h.clone()),
+    //                 p: p.to_string(),
+    //                 q: q.to_string(),
+    //                 g: g.to_string(),
+    //                 h: h.to_string(),
     //             },
     //         )),
     //     },
@@ -91,8 +91,8 @@ async fn main() -> Result<()> {
         Configuration {
             operations: Some(configuration::Operations::EllipticCurve(
                 configuration::EllipticCurve {
-                    g: ristretto_point_to_bytes(g),
-                    h: ristretto_point_to_bytes(h),
+                    g: ristretto_point_to_bigint(g).to_string(),
+                    h: ristretto_point_to_bigint(h).to_string(),
                 },
             )),
         },
@@ -116,16 +116,6 @@ async fn main() -> Result<()> {
     }
 
     Ok(())
-}
-
-fn bigint_to_bytes(v: BigInt) -> Bytes {
-    let (_, vec) = v.to_bytes_be();
-    Bytes::from(vec)
-}
-
-fn ristretto_point_to_bytes(v: RistrettoPoint) -> Bytes {
-    let v = v.compress().to_bytes();
-    Bytes::copy_from_slice(&v)
 }
 
 #[cfg(test)]

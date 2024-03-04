@@ -69,7 +69,6 @@ impl Operations<BigInt, BigInt> for DiscreteLogarithmOperations {
         s
     }
 
-    // TODO: rename to compute_r1_prime?
     fn compute_r1_prime(&self, y1: BigInt, c: BigInt, s: BigInt) -> BigInt {
         let one: BigInt = One::one();
         (self.g.modpow(&s, &self.p) * y1.modpow(&c, &self.p)).modpow(&one, &self.p)

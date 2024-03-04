@@ -1,9 +1,8 @@
-use bytes::Bytes;
 use num_bigint::{BigInt, BigUint, RandBigInt, Sign, ToBigInt};
 use num_primes::Generator;
 use num_traits::One;
 
-use super::{bigint_to_bytes, bytes_to_bigint, operations::DiscreteLogarithmOperations};
+use super::operations::DiscreteLogarithmOperations;
 use crate::{Operations, Verifier};
 
 pub struct DiscreteLogarithmVerifier {
@@ -19,26 +18,20 @@ impl DiscreteLogarithmVerifier {
 }
 
 impl Verifier for DiscreteLogarithmVerifier {
-    fn generate_challenge_c(&self) -> Bytes {
-        let c = self.operations.generate_c();
-        bigint_to_bytes(c)
+    fn generate_challenge_c(&self) -> BigInt {
+        self.operations.generate_c()
     }
 
     fn compute_verification_r1r2(
         &self,
-        y1: Bytes,
-        y2: Bytes,
-        c: Bytes,
-        s: Bytes,
-    ) -> (Bytes, Bytes) {
-        let y1 = bytes_to_bigint(y1);
-        let y2 = bytes_to_bigint(y2);
-        let c = bytes_to_bigint(c);
-        let s = bytes_to_bigint(s);
-        // TODO: fix these clones
+        y1: BigInt,
+        y2: BigInt,
+        c: BigInt,
+        s: BigInt,
+    ) -> (BigInt, BigInt) {
         let r1 = self.operations.compute_r1_prime(y1, c.clone(), s.clone());
         let r2 = self.operations.compute_r2_prime(y2, c, s);
-        (bigint_to_bytes(r1), bigint_to_bytes(r2))
+        (r1, r2)
     }
 }
 
