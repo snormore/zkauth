@@ -35,10 +35,6 @@ pub struct Options {
     #[arg(short, long, env("PORT"), default_value_t = 0)]
     port: u16,
 
-    /// Specifies the number of bits to use for generating prime numbers for the public parameters.
-    #[arg(long, default_value_t = 16)]
-    prime_bits: usize,
-
     /// Specifies the configuration file path.
     /// If not specified, a non-persistent configuration will be generated and used.
     #[arg(long, env("CONFIG_PATH"))]
@@ -58,6 +54,10 @@ pub struct Options {
     /// Specifies the configuration flavor to use.
     #[arg(long, default_value_t = ConfigFlavor::DiscreteLogarithm, value_enum)]
     config_flavor: ConfigFlavor,
+
+    /// Specifies the number of bits to use for generating prime numbers for the public parameters.
+    #[arg(long, default_value_t = 256)]
+    config_prime_bits: usize,
 }
 
 #[derive(Debug, Clone, EnumString, Display, VariantNames, ValueEnum)]
@@ -106,11 +106,11 @@ async fn main() -> Result<()> {
             // Generate a new configuration file and exit.
             let config: Configuration = match opts.config_flavor {
                 ConfigFlavor::DiscreteLogarithm => {
-                    let config = DiscreteLogarithmConfiguration::generate(opts.prime_bits);
+                    let config = DiscreteLogarithmConfiguration::generate(opts.config_prime_bits);
                     config.into()
                 }
                 ConfigFlavor::EllipticCurve => {
-                    let config = EllipticCurveConfiguration::generate(opts.prime_bits);
+                    let config = EllipticCurveConfiguration::generate();
                     config.into()
                 }
             };
@@ -141,7 +141,7 @@ async fn main() -> Result<()> {
         log::info!("No configuration file specified, generating non-persistent configuration.");
         match opts.config_flavor {
             ConfigFlavor::EllipticCurve => {
-                let config = EllipticCurveConfiguration::generate(opts.prime_bits);
+                let config = EllipticCurveConfiguration::generate();
                 let config = config.into();
                 let config_json = serde_json::to_string_pretty(&config).map_err(|e| {
                     log::error!("Failed to serialize configuration: {}", e);
@@ -151,7 +151,7 @@ async fn main() -> Result<()> {
                 config
             }
             _ => {
-                let config = DiscreteLogarithmConfiguration::generate(opts.prime_bits);
+                let config = DiscreteLogarithmConfiguration::generate(opts.config_prime_bits);
                 let config = config.into();
                 let config_json = serde_json::to_string_pretty(&config).map_err(|e| {
                     log::error!("Failed to serialize configuration: {}", e);
@@ -228,7 +228,7 @@ mod options {
         let opts = Options::parse_from(vec!["bin"]);
         assert_eq!(opts.port, 0);
         assert_eq!(opts.host, "127.0.0.1");
-        assert_eq!(opts.prime_bits, 16);
+        assert_eq!(opts.config_prime_bits, 16);
         Ok(())
     }
 
@@ -261,9 +261,30 @@ mod options {
     }
 
     #[test]
-    fn prime_bits_32() -> Result<()> {
+    fn config_prime_bits_32() -> Result<()> {
         let opts = Options::parse_from(vec!["bin", "--prime-bits=32"]);
-        assert_eq!(opts.prime_bits, 32);
+        assert_eq!(opts.config_prime_bits, 32);
+        Ok(())
+    }
+
+    #[test]
+    fn config_path() -> Result<()> {
+        let opts = Options::parse_from(vec!["bin", "--config-path=config.json"]);
+        assert_eq!(opts.config_path, Some("config.json".to_string()));
+        Ok(())
+    }
+
+    #[test]
+    fn config_generate() -> Result<()> {
+        let opts = Options::parse_from(vec!["bin", "--config-generate"]);
+        assert_eq!(opts.config_generate, true);
+        Ok(())
+    }
+
+    #[test]
+    fn config_overwrite() -> Result<()> {
+        let opts = Options::parse_from(vec!["bin", "--config-overwrite"]);
+        assert_eq!(opts.config_overwrite, true);
         Ok(())
     }
 }

@@ -5,6 +5,7 @@ pub mod configuration;
 pub mod prover;
 pub mod verifier;
 
+/// Generates a random scalar.
 fn generate_random_scalar() -> BigInt {
     let mut rng = rand::thread_rng();
     let num: BigUint = rng.sample(RandomBits::new(32));

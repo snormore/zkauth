@@ -2,14 +2,16 @@ use curve25519_dalek::{constants::RISTRETTO_BASEPOINT_POINT, RistrettoPoint, Sca
 use sha2::{Digest, Sha512};
 
 #[derive(Debug, Clone)]
-/// Configuration for the discrete logarithm protocol.
+/// Configuration for the elliptic curve protocol using ristretto points.
 pub struct EllipticCurveConfiguration {
     pub g: RistrettoPoint,
     pub h: RistrettoPoint,
 }
 
+/// Configuration for the elliptic curve protocol.
 impl EllipticCurveConfiguration {
-    pub fn generate(_prime_bits: usize) -> EllipticCurveConfiguration {
+    /// Generates a configuration from the ristretto base point.
+    pub fn generate() -> EllipticCurveConfiguration {
         let g = RISTRETTO_BASEPOINT_POINT;
 
         let h_value = "Unique value for H";

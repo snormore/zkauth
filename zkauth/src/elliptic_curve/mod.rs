@@ -7,11 +7,13 @@ pub mod configuration;
 pub mod prover;
 pub mod verifier;
 
+/// Generates a random scalar.
 fn generate_random_scalar() -> DalekScalar {
     let mut rng = rand::thread_rng();
     DalekScalar::random(&mut rng)
 }
 
+/// Converts a dalek scalar to a BigInt scalar.
 impl TryFrom<Scalar> for DalekScalar {
     type Error = ConversionError;
 
@@ -28,6 +30,7 @@ impl TryFrom<Scalar> for DalekScalar {
     }
 }
 
+/// Converts a BigInt scalar to a dalek scalar.
 impl From<DalekScalar> for Scalar {
     fn from(value: DalekScalar) -> Self {
         let v = value.to_bytes();
@@ -35,6 +38,7 @@ impl From<DalekScalar> for Scalar {
     }
 }
 
+/// Converts a ristretto point to a BigInt element.
 impl TryFrom<Element> for RistrettoPoint {
     type Error = ConversionError;
 
@@ -46,6 +50,7 @@ impl TryFrom<Element> for RistrettoPoint {
     }
 }
 
+/// Converts a BigInt element to a ristretto point.
 impl From<RistrettoPoint> for Element {
     fn from(value: RistrettoPoint) -> Self {
         let v = value.compress().to_bytes();
