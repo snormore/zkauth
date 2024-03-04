@@ -1,7 +1,7 @@
 [workspace]
 
 members = [
-    "zkauth-pb",
+    "zkauth-protobuf",
     "zkauth-client",
     "zkauth-server",
     "zkauth-demo-cli",

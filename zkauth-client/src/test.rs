@@ -4,7 +4,7 @@
 //     Request, Response, Status,
 // };
 // use tower::service_fn;
-// use zkauth_pb::v1::{
+// use zkauth_protobuf::v1::{
 //     auth_client::AuthClient,
 //     auth_server::{Auth, AuthServer},
 //     AuthenticationAnswerRequest, AuthenticationAnswerResponse, AuthenticationChallengeRequest,

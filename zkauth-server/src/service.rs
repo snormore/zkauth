@@ -4,7 +4,7 @@ use std::time::Duration;
 use tonic::{Request, Response, Status};
 use uuid::Uuid;
 use zkauth::{Element, Scalar, Verifier};
-use zkauth_pb::v1::{
+use zkauth_protobuf::v1::{
     auth_server::Auth, AuthenticationAnswerRequest, AuthenticationAnswerResponse,
     AuthenticationChallengeRequest, AuthenticationChallengeResponse, Configuration,
     GetConfigurationRequest, RegisterRequest, RegisterResponse,

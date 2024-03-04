@@ -3,7 +3,7 @@ use tokio::net::TcpListener;
 use tonic::transport::{Channel, Server};
 use tonic::Code;
 use zkauth_client::{client::Client, AuthClient};
-use zkauth_pb::v1::auth_server::AuthServer;
+use zkauth_protobuf::v1::auth_server::AuthServer;
 use zkauth_server::Service;
 
 async fn start_server_in_background() -> Result<AuthClient<Channel>> {

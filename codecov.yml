@@ -1,2 +1,2 @@
 ignore:
-  - "zkauth-pb"
+  - "zkauth-protobuf"

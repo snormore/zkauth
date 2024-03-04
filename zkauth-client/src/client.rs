@@ -4,7 +4,7 @@ use zkauth::{
     discrete_logarithm::prover::DiscreteLogarithmProver,
     elliptic_curve::prover::EllipticCurveProver, Prover, Scalar,
 };
-use zkauth_pb::v1::{
+use zkauth_protobuf::v1::{
     auth_client::AuthClient, configuration::Flavor, AuthenticationAnswerRequest,
     AuthenticationChallengeRequest, GetConfigurationRequest, RegisterRequest,
 };

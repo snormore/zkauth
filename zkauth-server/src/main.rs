@@ -17,8 +17,8 @@ use zkauth::elliptic_curve::{
     configuration::EllipticCurveConfiguration, verifier::EllipticCurveVerifier,
 };
 use zkauth::Verifier;
-use zkauth_pb::v1::auth_server::AuthServer;
-use zkauth_pb::v1::{configuration::Flavor, Configuration};
+use zkauth_protobuf::v1::auth_server::AuthServer;
+use zkauth_protobuf::v1::{configuration::Flavor, Configuration};
 use zkauth_server::service::Service;
 
 #[derive(Parser, Debug)]

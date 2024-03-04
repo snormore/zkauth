@@ -1577,7 +1577,7 @@ dependencies = [
  "tokio-stream",
  "tonic",
  "zkauth-client",
- "zkauth-pb",
+ "zkauth-protobuf",
  "zkauth-server",
 ]
 
@@ -2111,7 +2111,7 @@ dependencies = [
  "tonic",
  "tower",
  "zkauth",
- "zkauth-pb",
+ "zkauth-protobuf",
 ]
 
 [[package]]
@@ -2129,12 +2129,12 @@ dependencies = [
  "tonic",
  "wait-timeout",
  "zkauth-client",
- "zkauth-pb",
+ "zkauth-protobuf",
  "zkauth-server",
 ]
 
 [[package]]
-name = "zkauth-pb"
+name = "zkauth-protobuf"
 version = "0.1.0"
 dependencies = [
  "pbjson",
@@ -2177,5 +2177,5 @@ dependencies = [
  "uuid",
  "wait-timeout",
  "zkauth",
- "zkauth-pb",
+ "zkauth-protobuf",
 ]
