@@ -1,7 +1,9 @@
 use anyhow::Result;
 use num_bigint::BigInt;
+use num_traits::{One, Zero};
 use std::fmt;
 use std::fmt::Debug;
+use std::ops::{Add, Mul};
 use std::str::FromStr;
 
 pub mod discrete_logarithm;
@@ -87,5 +89,101 @@ impl FromStr for Element {
 impl fmt::Display for Element {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.0)
+    }
+}
+
+impl Add for Scalar {
+    type Output = Self;
+
+    fn add(self, other: Self) -> Self::Output {
+        Scalar(self.0 + other.0)
+    }
+}
+
+impl<'a> Add for &'a Scalar {
+    type Output = Scalar;
+
+    fn add(self, other: Self) -> Self::Output {
+        Scalar(&self.0 + &other.0)
+    }
+}
+
+impl Mul for Scalar {
+    type Output = Self;
+
+    fn mul(self, other: Self) -> Self::Output {
+        Scalar(self.0 * other.0)
+    }
+}
+
+impl<'a> Mul for &'a Scalar {
+    type Output = Scalar;
+
+    fn mul(self, other: Self) -> Self::Output {
+        Scalar(&self.0 * &other.0)
+    }
+}
+
+impl Add for Element {
+    type Output = Self;
+
+    fn add(self, other: Self) -> Self::Output {
+        Element(self.0 + other.0)
+    }
+}
+
+impl<'a> Add for &'a Element {
+    type Output = Element;
+
+    fn add(self, other: Self) -> Self::Output {
+        Element(&self.0 + &other.0)
+    }
+}
+
+impl Mul for Element {
+    type Output = Self;
+
+    fn mul(self, other: Self) -> Self::Output {
+        Element(self.0 * other.0)
+    }
+}
+
+impl<'a> Mul for &'a Element {
+    type Output = Element;
+
+    fn mul(self, other: Self) -> Self::Output {
+        Element(&self.0 * &other.0)
+    }
+}
+
+impl Zero for Scalar {
+    fn zero() -> Self {
+        Scalar(BigInt::zero())
+    }
+
+    fn is_zero(&self) -> bool {
+        self.0.is_zero()
+    }
+}
+
+impl One for Scalar {
+    fn one() -> Self {
+        Scalar(BigInt::one())
+    }
+}
+
+impl Zero for Element {
+    fn zero() -> Self {
+        Element(BigInt::zero())
+    }
+
+    fn is_zero(&self) -> bool {
+        self.0.is_zero()
+    }
+}
+
+impl One for Element {
+    fn one() -> Self {
+        Element(BigInt::one())
     }
 }

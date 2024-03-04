@@ -14,10 +14,11 @@ pub struct DiscreteLogarithmConfiguration {
 impl DiscreteLogarithmConfiguration {
     pub fn generate(prime_bits: usize) -> DiscreteLogarithmConfiguration {
         // Based on https://github.com/neongazer/zkp-auth-py/blob/main/zkp_auth/sigma_protocols/utils.py
-        let p = BigInt::from_biguint(
-            Sign::Plus,
-            BigUint::from_bytes_be(&Generator::safe_prime(prime_bits).to_bytes_be()),
-        );
+        let mut prime = Generator::safe_prime(prime_bits);
+        while prime == One::one() {
+            prime = Generator::safe_prime(prime_bits);
+        }
+        let p = BigInt::from_biguint(Sign::Plus, BigUint::from_bytes_be(&prime.to_bytes_be()));
         let one: BigInt = One::one();
         let two = &one + &one;
         let q = (&p - one) / two;

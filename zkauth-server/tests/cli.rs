@@ -11,6 +11,7 @@ mod main {
     #[test]
     fn succeeds() -> Result<(), Box<dyn std::error::Error>> {
         let mut cmd = Command::cargo_bin("zkauth-server")?
+            .arg("--prime-bits=16")
             .stderr(Stdio::piped())
             .spawn()?;
 
@@ -25,7 +26,11 @@ mod main {
         let mut output = String::new();
         cmd.stderr.unwrap().read_to_string(&mut output).unwrap();
 
-        assert!(output.contains("Server listening on 127.0.0.1:"));
+        assert!(
+            output.contains("Server listening on 127.0.0.1:"),
+            "{}",
+            output
+        );
 
         Ok(())
     }

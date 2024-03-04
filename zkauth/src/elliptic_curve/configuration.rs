@@ -9,7 +9,7 @@ pub struct EllipticCurveConfiguration {
 }
 
 impl EllipticCurveConfiguration {
-    pub fn generate(prime_bits: usize) -> EllipticCurveConfiguration {
+    pub fn generate(_prime_bits: usize) -> EllipticCurveConfiguration {
         let g = RISTRETTO_BASEPOINT_POINT;
 
         let h_value = "Unique value for H";

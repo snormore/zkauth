@@ -5,6 +5,7 @@ use num_traits::One;
 use super::{configuration::DiscreteLogarithmConfiguration, generate_random_scalar};
 use crate::{Element, Scalar, Verifier};
 
+#[derive(Clone)]
 pub struct DiscreteLogarithmVerifier {
     config: DiscreteLogarithmConfiguration,
 }
