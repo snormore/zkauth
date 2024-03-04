@@ -19,8 +19,7 @@ impl EllipticCurveProver {
         let password_hash = Sha512::digest(password.as_bytes());
         let mut x_bytes = [0u8; 32];
         x_bytes.copy_from_slice(&password_hash[..32]);
-        let x = DalekScalar::from_bytes_mod_order(x_bytes);
-        x
+        DalekScalar::from_bytes_mod_order(x_bytes)
     }
 
     fn generate_x(&self) -> DalekScalar {

@@ -23,7 +23,6 @@ uuid = { version = "1.7.0", features = ["v4", "fast-rng"] }
 dashmap = "5.5.3"
 num-traits = "0.2.18"
 moka = { version = "0.12.5", features = ["future", "sync"] }
-num-primes = "0.3.0"
 futures-util = "0.3.30"
 curve25519-dalek = { version = "4.1.2", features = ["digest"] }
 sha2 = "0.10.8"

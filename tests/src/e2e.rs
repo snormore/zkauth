@@ -2,9 +2,18 @@ use anyhow::Result;
 use tokio::net::TcpListener;
 use tonic::transport::{Channel, Server};
 use tonic::Code;
+use zkauth::discrete_logarithm::{
+    configuration::DiscreteLogarithmConfiguration, verifier::DiscreteLogarithmVerifier,
+};
 use zkauth_client::{client::Client, AuthClient};
 use zkauth_protobuf::v1::auth_server::AuthServer;
-use zkauth_server::Service;
+use zkauth_server::service::Service;
+
+fn test_service() -> Service {
+    let config = DiscreteLogarithmConfiguration::generate(16);
+    let verifier = Box::new(DiscreteLogarithmVerifier::new(config.clone()));
+    Service::new(config.into(), verifier)
+}
 
 async fn start_server_in_background() -> Result<AuthClient<Channel>> {
     let listener = TcpListener::bind("127.0.0.1:0").await.unwrap();
@@ -12,7 +21,7 @@ async fn start_server_in_background() -> Result<AuthClient<Channel>> {
 
     tokio::spawn(async move {
         Server::builder()
-            .add_service(AuthServer::new(Service::default()))
+            .add_service(AuthServer::new(test_service()))
             .serve_with_incoming(tokio_stream::wrappers::TcpListenerStream::new(listener))
             .await
     });

@@ -5,7 +5,7 @@ edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
-[dependencies]
+[dev-dependencies]
 zkauth-protobuf = { path = "../zkauth-protobuf", features = ["full"] }
 zkauth-client = { path = "../zkauth-client" }
 zkauth-server = { path = "../zkauth-server" }
@@ -15,3 +15,4 @@ anyhow = "1.0.80"
 log = "0.4.21"
 tonic = "0.11.0"
 env_logger = "0.11.2"
+zkauth = { path = "../zkauth" }
