@@ -210,12 +210,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9d297deb1925b89f2ccc13d7635fa0714f12c87adce1c75356b39ca9b7178567"
 
 [[package]]
-name = "base64"
-version = "0.22.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9475866fec1451be56a3c2400fd081ff546538961565ccb5b7142cbd22bc7a51"
-
-[[package]]
 name = "bitflags"
 version = "1.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -472,12 +466,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "fea41bba32d969b513997752735605054bc0dfa92b4c56bf1189f2e174be7a10"
 
 [[package]]
-name = "dotenvy"
-version = "0.15.7"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1aaf95b3e5c8f23aa320147307562d361db0ae0d51242340f558153b4eb2439b"
-
-[[package]]
 name = "either"
 version = "1.10.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -697,12 +685,6 @@ name = "hermit-abi"
 version = "0.3.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d231dfb89cfffdbc30e7fc41579ed6066ad03abda9e567ccafae602b97ec5024"
-
-[[package]]
-name = "hex"
-version = "0.4.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7f24254aa9a54b5c858eaee2f5bccdb46aaf0e486a595ed5fd8f86ba55232a70"
 
 [[package]]
 name = "http"
@@ -997,16 +979,6 @@ dependencies = [
  "redox_syscall",
  "smallvec",
  "windows-targets 0.48.5",
-]
-
-[[package]]
-name = "pbjson"
-version = "0.6.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1030c719b0ec2a2d25a5df729d6cff1acf3cc230bf766f4f97833591f7577b90"
-dependencies = [
- "base64 0.21.7",
- "serde",
 ]
 
 [[package]]
@@ -1511,7 +1483,6 @@ name = "tests"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "env_logger",
  "log",
  "tokio",
  "tokio-stream",
@@ -1617,7 +1588,7 @@ dependencies = [
  "async-stream",
  "async-trait",
  "axum",
- "base64 0.21.7",
+ "base64",
  "bytes",
  "h2",
  "http",
@@ -2026,7 +1997,6 @@ name = "zkauth"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "bytes",
  "curve25519-dalek",
  "num-bigint",
  "num-traits",
@@ -2040,13 +2010,11 @@ name = "zkauth-client"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "bytes",
  "curve25519-dalek",
  "log",
  "num-bigint",
  "num-traits",
  "rand",
- "sha2",
  "tokio",
  "tokio-stream",
  "tonic",
@@ -2079,7 +2047,6 @@ dependencies = [
 name = "zkauth-protobuf"
 version = "0.1.0"
 dependencies = [
- "pbjson",
  "prost",
  "serde",
  "tonic",
@@ -2092,16 +2059,12 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "assert_cmd",
- "base64 0.22.0",
- "bytes",
  "clap",
  "clap-verbosity-flag",
  "curve25519-dalek",
  "dashmap",
- "dotenvy",
  "env_logger",
  "futures-util",
- "hex",
  "log",
  "moka",
  "num-bigint",
@@ -2109,7 +2072,6 @@ dependencies = [
  "rand",
  "serde",
  "serde_json",
- "sha2",
  "strum",
  "strum_macros",
  "tokio",

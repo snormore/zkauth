@@ -36,7 +36,7 @@ pub struct Options {
     port: u16,
 
     /// Specifies the number of bits to use for generating prime numbers for the public parameters.
-    #[arg(long, default_value_t = 128)]
+    #[arg(long, default_value_t = 16)]
     prime_bits: usize,
 
     /// Specifies the configuration file path.
@@ -228,7 +228,7 @@ mod options {
         let opts = Options::parse_from(vec!["bin"]);
         assert_eq!(opts.port, 0);
         assert_eq!(opts.host, "127.0.0.1");
-        assert_eq!(opts.prime_bits, 128);
+        assert_eq!(opts.prime_bits, 16);
         Ok(())
     }
 

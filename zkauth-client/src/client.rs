@@ -1,4 +1,3 @@
-use std::convert::TryInto;
 use tonic::{transport::Channel, Status};
 use zkauth::{
     discrete_logarithm::prover::DiscreteLogarithmProver,

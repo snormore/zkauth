@@ -201,7 +201,6 @@ mod test {
     use zkauth::discrete_logarithm::{
         configuration::DiscreteLogarithmConfiguration, verifier::DiscreteLogarithmVerifier,
     };
-    use zkauth_protobuf::v1::auth_server::Auth;
 
     fn test_service() -> Service {
         let config = DiscreteLogarithmConfiguration::generate(16);
@@ -212,7 +211,6 @@ mod test {
     #[cfg(test)]
     mod get_configuration {
         use super::*;
-        use zkauth_protobuf::v1::{Configuration, GetConfigurationRequest};
 
         #[tokio::test]
         async fn succeeds_with_discrete_logarithm_config() -> Result<()> {
@@ -235,7 +233,6 @@ mod test {
     #[cfg(test)]
     mod register {
         use super::*;
-        use zkauth_protobuf::v1::{RegisterRequest, RegisterResponse};
 
         #[tokio::test]
         async fn succeeds() -> Result<()> {

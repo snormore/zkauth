@@ -6,11 +6,10 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-pbjson = "0.6.0"
+zkauth = { path = "../zkauth" }
 prost = "0.12.3"
 serde = "1.0.197"
 tonic = "0.11.0"
-zkauth = { path = "../zkauth" }
 
 [features]
 default = ["zkauth-v1"]

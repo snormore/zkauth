@@ -25,7 +25,6 @@ pub async fn run(
 #[cfg(test)]
 mod run {
     use super::*;
-    use anyhow::Result;
     use tokio::net::TcpListener;
     use tonic::transport::Server;
     use zkauth::discrete_logarithm::{
