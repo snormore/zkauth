@@ -1,6 +1,7 @@
-use num_bigint::{BigInt, BigUint, RandBigInt, Sign};
-use num_primes::Generator;
+use num_bigint::{BigInt, RandBigInt};
 use num_traits::One;
+use primal::Primes;
+use rand::prelude::SliceRandom;
 
 #[derive(Debug, Clone)]
 /// Configuration for the discrete logarithm protocol.
@@ -14,11 +15,7 @@ pub struct DiscreteLogarithmConfiguration {
 impl DiscreteLogarithmConfiguration {
     pub fn generate(prime_bits: usize) -> DiscreteLogarithmConfiguration {
         // Based on https://github.com/neongazer/zkp-auth-py/blob/main/zkp_auth/sigma_protocols/utils.py
-        let mut prime = Generator::safe_prime(prime_bits);
-        while prime == One::one() {
-            prime = Generator::safe_prime(prime_bits);
-        }
-        let p = BigInt::from_biguint(Sign::Plus, BigUint::from_bytes_be(&prime.to_bytes_be()));
+        let p = generate_prime(prime_bits);
         let one: BigInt = One::one();
         let two = &one + &one;
         let q = (&p - one) / two;
@@ -32,6 +29,16 @@ impl DiscreteLogarithmConfiguration {
         let (g, h) = if g1 < g2 { (g1, g2) } else { (g2, g1) };
         DiscreteLogarithmConfiguration { p, q, g, h }
     }
+}
+
+fn generate_prime(bits: usize) -> BigInt {
+    let mut rng = rand::thread_rng();
+    let prime_limit = BigInt::from(2).pow(bits as u32);
+    let primes: Vec<BigInt> = Primes::all()
+        .map(BigInt::from)
+        .take_while(|p| p < &prime_limit)
+        .collect();
+    primes.choose(&mut rng).unwrap().clone()
 }
 
 fn generate_g(p: BigInt, q: BigInt) -> BigInt {
