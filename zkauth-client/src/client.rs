@@ -141,68 +141,59 @@ impl Client {
     }
 }
 
-// #[cfg(test)]
-// mod new {
-//     use super::*;
-//     use crate::test::mock_client;
-//     use anyhow::Result;
-//     use num_traits::One;
+#[cfg(test)]
+mod new {
+    use super::*;
+    use crate::test::mock_client;
+    use anyhow::Result;
 
-//     #[tokio::test]
-//     async fn succeeds() -> Result<()> {
-//         let client = mock_client().await?;
-//         let prover = Client::new(client, "user".to_string(), "password".to_string())
-//             .await
-//             .unwrap();
+    #[tokio::test]
+    async fn succeeds() -> Result<()> {
+        let client = mock_client().await?;
+        let prover = Client::new(client, "user".to_string(), "password".to_string())
+            .await
+            .unwrap();
 
-//         assert_eq!(
-//             prover.parameters,
-//             Parameters {
-//                 p: One::one(),
-//                 q: One::one(),
-//                 g: One::one(),
-//                 h: One::one(),
-//             }
-//         );
+        assert_eq!(prover.user, "user");
 
-//         Ok(())
-//     }
-// }
+        Ok(())
+    }
+}
 
-// #[cfg(test)]
-// mod register {
-//     use super::*;
-//     use crate::test::mock_client;
-//     use anyhow::Result;
+#[cfg(test)]
+mod register {
+    use super::*;
+    use crate::test::mock_client;
+    use anyhow::Result;
 
-//     #[tokio::test]
-//     async fn succeeds() -> Result<()> {
-//         let client = mock_client().await?;
-//         let prover = Client::new(client, "user".to_string(), "password".to_string())
-//             .await
-//             .unwrap();
+    #[tokio::test]
+    async fn succeeds() -> Result<()> {
+        let client = mock_client().await?;
+        let prover = Client::new(client, "user".to_string(), "password".to_string())
+            .await
+            .unwrap();
 
-//         prover.register().await.unwrap();
+        prover.register().await.unwrap();
 
-//         Ok(())
-//     }
-// }
+        Ok(())
+    }
+}
 
-// #[cfg(test)]
-// mod login {
-//     use super::*;
-//     use crate::test::mock_client;
-//     use anyhow::Result;
+#[cfg(test)]
+mod login {
+    use super::*;
+    use crate::test::mock_client;
+    use anyhow::Result;
 
-//     #[tokio::test]
-//     async fn succeeds() -> Result<()> {
-//         let client = mock_client().await?;
-//         let prover = Client::new(client, "user".to_string(), "password".to_string())
-//             .await
-//             .unwrap();
+    #[tokio::test]
+    async fn succeeds() -> Result<()> {
+        let client = mock_client().await?;
+        let prover = Client::new(client, "user".to_string(), "password".to_string())
+            .await
+            .unwrap();
 
-//         prover.login().await.unwrap();
+        prover.login().await.unwrap();
 
-//         Ok(())
-//     }
-// }
+        Ok(())
+    }
+}
