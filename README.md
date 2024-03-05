@@ -26,6 +26,44 @@ This repository provides a Rust library implementing the [Chaum-Pedersen protoco
 - [`zkauth-demo-cli`](./zkauth-demo-cli): A simple CLI for interacting with the server as the client.
 - [`tests`](./zkauth): A suite of functional tests that encode the expectations of the client/prover and server/verifier in an end-to-end way.
 
+## User Workflows
+
+The authentication workflows are as follows:
+
+### Registration
+
+```mermaid
+sequenceDiagram
+    note over Client: Compute (y2, y2)<br />from password x
+    Client->>+Server: Register (user, (y1, y2))
+    Server->>Store: Store (user, (y1, y2))
+    Server->>-Client: Return ()
+```
+
+### Login
+
+```mermaid
+sequenceDiagram
+    note over Client: Generate k
+    note over Client: Compute commitment<br />(r1, r2)
+    Client->>+Server: Create challenge (user, (r1, r2))
+    Server->>Store: Validate user exists
+    Store-->>Server:
+    Server->>Store: Cache (challenge, (user, c, r1, r2))
+    note over Server: Generate c
+    Server->>Client: Return (challenge, c)
+    note over Client: Compute challenge<br />response s
+    Client->>Server: Verify (challenge, s)
+    Server->>Store: Get (challenge, (user, c, r1, r2))
+    Store-->>Server:
+    Server->>Store: Get (user, (y1, y2))
+    Store-->>Server:
+    note over Server: Compute (r1', r2')
+    note over Server: Validate that<br />r1' == challenge.r1 and<br />r2' == challenge.r2
+    Server->>Store: Cache (s, session)
+    Server->>-Client: Return (session)
+```
+
 ## Chaum-Pedersen Proofs
 
 The library supports two flavors:
