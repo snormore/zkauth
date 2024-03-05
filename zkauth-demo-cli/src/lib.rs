@@ -1,6 +1,7 @@
 use anyhow::Result;
 use zkauth_client::{client::Client, AuthClient};
 
+/// Runs the zkauth client.
 pub async fn run(
     address: String,
     user: String,

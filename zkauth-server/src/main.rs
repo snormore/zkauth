@@ -1,3 +1,39 @@
+// Enforce documentation for all public items in the crate.
+#![warn(missing_docs)]
+
+//! Server for the zkauth authentication protocol.
+//!
+//! The server listens for incoming client requests and processes them using the zkauth protocol.
+//! It uses the `tonic` library to provide a gRPC interface for the client to communicate with the
+//! server.
+//!
+//! The server can be configured using command line options, and can also generate a configuration
+//! file for use with the server. The configuration file specifies the public parameters for the
+//! zkauth protocol, such as the prime number and generator for the discrete logarithm protocol, or
+//! the base points for the elliptic curve protocol.
+//!
+//! # Usage
+//!
+//! The server can be run with the following command:
+//!
+//! ```sh
+//! zkauth-server
+//! ```
+//!
+//! The server can be configured using the following command line options:
+//!
+//! ```sh
+//! zkauth-server --help
+//! ```
+//!
+//! The server can also generate a configuration file using the following command:
+//!
+//! ```sh
+//! zkauth-server --config-generate --config-path=config.json
+//! ```
+//!
+//! The configuration file can be used to specify the public parameters for the zkauth protocol.
+
 use anyhow::{Error, Result};
 use clap::{Parser, ValueEnum};
 use clap_verbosity_flag::{InfoLevel, Verbosity};
@@ -21,6 +57,7 @@ use zkauth_protobuf::v1::auth_server::AuthServer;
 use zkauth_protobuf::v1::{configuration::Flavor, Configuration};
 use zkauth_server::service::Service;
 
+/// Command line options for the server.
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
 pub struct Options {
@@ -60,14 +97,17 @@ pub struct Options {
     config_prime_bits: usize,
 }
 
-#[derive(Debug, Clone, EnumString, Display, VariantNames, ValueEnum)]
+/// Configuration flavor.
+#[derive(Debug, Clone, EnumString, Display, VariantNames, ValueEnum, PartialEq)]
 #[strum(serialize_all = "kebab-case")]
 enum ConfigFlavor {
     DiscreteLogarithm,
     EllipticCurve,
 }
 
+/// Implementation of the options.
 impl Options {
+    /// Initializes the logger based on the verbosity level.
     fn init_logger(&self) {
         if self.verbose.is_present() {
             env_logger::Builder::new()
@@ -79,6 +119,7 @@ impl Options {
     }
 }
 
+/// Main entry point for the server.
 #[tokio::main]
 async fn main() -> Result<()> {
     let opts = Options::parse();
@@ -120,8 +161,9 @@ async fn main() -> Result<()> {
         }
     }
 
-    // Load configuration from file if specified.
+    // Load configuration from file if specified, or generate a non-persistent configuration.
     let config: Configuration = if opts.config_path.is_some() {
+        // Load configuration from file.
         if !Path::new(config_path.as_str()).exists() {
             log::error!("Configuration file not found at '{}'.", config_path);
             return Ok(());
@@ -138,6 +180,7 @@ async fn main() -> Result<()> {
 
         serde_json::from_str(&config_json)?
     } else {
+        // Generate a non-persistent configuration.
         log::info!("No configuration file specified, generating non-persistent configuration.");
         match opts.config_flavor {
             ConfigFlavor::EllipticCurve => {
@@ -228,7 +271,7 @@ mod options {
         let opts = Options::parse_from(vec!["bin"]);
         assert_eq!(opts.port, 0);
         assert_eq!(opts.host, "127.0.0.1");
-        assert_eq!(opts.config_prime_bits, 16);
+        assert_eq!(opts.config_prime_bits, 256);
         Ok(())
     }
 
@@ -262,7 +305,7 @@ mod options {
 
     #[test]
     fn config_prime_bits_32() -> Result<()> {
-        let opts = Options::parse_from(vec!["bin", "--prime-bits=32"]);
+        let opts = Options::parse_from(vec!["bin", "--config-prime-bits=32"]);
         assert_eq!(opts.config_prime_bits, 32);
         Ok(())
     }
@@ -285,6 +328,34 @@ mod options {
     fn config_overwrite() -> Result<()> {
         let opts = Options::parse_from(vec!["bin", "--config-overwrite"]);
         assert_eq!(opts.config_overwrite, true);
+        Ok(())
+    }
+
+    #[test]
+    fn config_flavor_discrete_logarithm() -> Result<()> {
+        let opts = Options::parse_from(vec!["bin", "--config-flavor=discrete-logarithm"]);
+        assert_eq!(opts.config_flavor, ConfigFlavor::DiscreteLogarithm);
+        Ok(())
+    }
+
+    #[test]
+    fn config_flavor_elliptic_curve() -> Result<()> {
+        let opts = Options::parse_from(vec!["bin", "--config-flavor=elliptic-curve"]);
+        assert_eq!(opts.config_flavor, ConfigFlavor::EllipticCurve);
+        Ok(())
+    }
+
+    #[test]
+    fn config_flavor_default() -> Result<()> {
+        let opts = Options::parse_from(vec!["bin"]);
+        assert_eq!(opts.config_flavor, ConfigFlavor::DiscreteLogarithm);
+        Ok(())
+    }
+
+    #[test]
+    fn verbose() -> Result<()> {
+        let opts = Options::parse_from(vec!["bin", "-v"]);
+        assert_eq!(opts.verbose.log_level_filter(), log::LevelFilter::Debug);
         Ok(())
     }
 }

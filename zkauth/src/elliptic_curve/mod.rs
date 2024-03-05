@@ -3,8 +3,13 @@ use num_bigint::{BigInt, Sign};
 
 use crate::{ConversionError, Element, Scalar};
 
+/// The configuration module.
 pub mod configuration;
+
+/// The prover module.
 pub mod prover;
+
+/// The verifier module.
 pub mod verifier;
 
 /// Generates a random scalar.

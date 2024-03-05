@@ -1,9 +1,27 @@
+// Enforce documentation for all public items in the crate.
+#![warn(missing_docs)]
+
+//! A simple command-line interface for the zkauth client.
+//!
+//! This crate provides a simple command-line interface for the zkauth client. It allows users to
+//! register and login using the zkauth protocol.
+//!
+//! # Usage
+//!
+//! ```sh
+//! zkauth-demo-cli --address http://localhost:5001 --user user --password password --register --login
+//! ```
+//!
+//! This command will register and login the user `user` with the password `password` using the
+//! zkauth protocol at the address `http://localhost:5001`.
+
 use anyhow::Result;
 use clap::Parser;
 use clap_verbosity_flag::{InfoLevel, Verbosity};
 use env_logger::Env;
 use zkauth_demo_cli::run;
 
+/// The command-line options for the zkauth client.
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
 pub struct Options {
@@ -31,7 +49,9 @@ pub struct Options {
     login: bool,
 }
 
+/// Implementation of the options.
 impl Options {
+    /// Initializes the logger based on the verbosity level.
     fn init_logger(&self) {
         if self.verbose.is_present() {
             let _ = env_logger::Builder::new()
@@ -44,16 +64,19 @@ impl Options {
     }
 }
 
+/// Main entry point for the client.
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let opts = Options::parse();
     opts.init_logger();
 
+    // Ensure that either --register or --login is true.
     if !opts.register && !opts.login {
         eprintln!("Error: Either --register or --login should be true");
         std::process::exit(1);
     }
 
+    // Run the client.
     run(
         opts.address,
         opts.user,
@@ -102,6 +125,32 @@ mod options {
             "--user=user",
             "--password=password",
             "-v",
+        ]);
+        opts.init_logger();
+        Ok(())
+    }
+
+    #[test]
+    fn init_logger_quiet() -> Result<()> {
+        let opts = Options::parse_from(vec![
+            "bin",
+            "--address=https://test.net:5000",
+            "--user=user",
+            "--password=password",
+            "-q",
+        ]);
+        opts.init_logger();
+        Ok(())
+    }
+
+    #[test]
+    fn init_logger_debug() -> Result<()> {
+        let opts = Options::parse_from(vec![
+            "bin",
+            "--address=https://test.net:5000",
+            "--user=user",
+            "--password=password",
+            "-vv",
         ]);
         opts.init_logger();
         Ok(())

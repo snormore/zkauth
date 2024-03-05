@@ -1,3 +1,12 @@
+// Enforce documentation for all public items in the crate.
+#![warn(missing_docs)]
+
+//! The zkauth client library.
+//!
+//! This library provides the client for the zkauth service, acting as the prover for the zero-
+//! knowledge authentication protocol.
+
+/// The client module.
 pub mod client;
 
 #[doc(inline)]

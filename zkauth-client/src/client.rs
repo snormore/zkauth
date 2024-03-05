@@ -8,6 +8,7 @@ use zkauth_protobuf::v1::{
     AuthenticationChallengeRequest, GetConfigurationRequest, RegisterRequest,
 };
 
+/// Client for the authentication protocol.
 #[derive(Debug)]
 pub struct Client {
     client: AuthClient<Channel>,
@@ -16,7 +17,12 @@ pub struct Client {
     x: Scalar,
 }
 
+/// Implementation of the client.
 impl Client {
+    /// Creates a new client given a user and password.
+    /// # Errors
+    /// * Returns an error if the user or password is invalid.
+    /// * Returns an error if the configuration is unknown or cannot be converted.
     pub async fn new(
         mut client: AuthClient<Channel>,
         user: String,
@@ -30,6 +36,7 @@ impl Client {
             return Err(Status::invalid_argument("Invalid password argument"));
         }
 
+        // Get the configuration from the server.
         let config = client
             .get_configuration(GetConfigurationRequest {})
             .await?
@@ -59,6 +66,12 @@ impl Client {
         })
     }
 
+    /// Registers the user by computing y1 and y2 and sending a registration request to the server.
+    /// # Errors
+    /// * Returns an error if the registration fails.
+    /// * Returns an error if the y1 and y2 cannot be computed.
+    /// * Returns an error if the registration request fails to the server.
+    /// * Returns an error if the challenge response from the server is invalid.
     pub async fn register(&self) -> Result<(), Status> {
         // Compute y1 and y2 for registration.
         let (y1, y2) = self
@@ -85,6 +98,10 @@ impl Client {
         Ok(())
     }
 
+    /// Logs in the user by sending a challenge request to the server and verifying the response.
+    /// # Errors
+    /// * Returns an error if the challenge response fails.
+    /// * Returns an error if the verification fails.
     pub async fn login(&self) -> Result<(), Status> {
         // Generate random number k.
         let k = self.prover.generate_challenge_k();
@@ -146,6 +163,7 @@ mod new {
     use crate::test::mock_client;
     use anyhow::Result;
 
+    /// Tests the new client creation.
     #[tokio::test]
     async fn succeeds() -> Result<()> {
         let client = mock_client().await?;
@@ -165,6 +183,7 @@ mod register {
     use crate::test::mock_client;
     use anyhow::Result;
 
+    /// Tests that the registration process succeeds.
     #[tokio::test]
     async fn succeeds() -> Result<()> {
         let client = mock_client().await?;
@@ -184,6 +203,7 @@ mod login {
     use crate::test::mock_client;
     use anyhow::Result;
 
+    /// Tests that the login process succeeds.
     #[tokio::test]
     async fn succeeds() -> Result<()> {
         let client = mock_client().await?;

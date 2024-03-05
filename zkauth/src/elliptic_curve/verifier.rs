@@ -6,19 +6,24 @@ use super::generate_random_scalar;
 use crate::Verifier;
 use crate::{Element, Scalar};
 
+/// The elliptic curve verifier.
 pub struct EllipticCurveVerifier {
     config: EllipticCurveConfiguration,
 }
 
+/// Implementation of the elliptic curve verifier.
 impl EllipticCurveVerifier {
+    /// Creates a new elliptic curve verifier.
     pub fn new(config: EllipticCurveConfiguration) -> Self {
         EllipticCurveVerifier { config }
     }
 
+    /// Generates a random c value.
     fn generate_c(&self) -> DalekScalar {
         generate_random_scalar()
     }
 
+    /// Computes r1' from the given y1, c, and s.
     fn compute_r1_prime(
         &self,
         y1: RistrettoPoint,
@@ -28,6 +33,7 @@ impl EllipticCurveVerifier {
         (self.config.g * s) - (y1 * c)
     }
 
+    /// Computes r2' from the given y2, c, and s.
     fn compute_r2_prime(
         &self,
         y2: RistrettoPoint,
@@ -38,12 +44,15 @@ impl EllipticCurveVerifier {
     }
 }
 
+/// Implementation of the verifier trait for the elliptic curve verifier.
 impl Verifier for EllipticCurveVerifier {
+    /// Generates a challenge c value.
     fn generate_challenge_c(&self) -> Scalar {
         let c = self.generate_c();
         c.into()
     }
 
+    /// Computes verification r1' and r2' values from the given y1, y2, c, and s.
     fn compute_verification_r1r2(
         &self,
         y1: Element,

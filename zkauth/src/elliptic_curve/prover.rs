@@ -5,16 +5,20 @@ use sha2::{Digest, Sha512};
 use super::{configuration::EllipticCurveConfiguration, generate_random_scalar};
 use crate::{Element, Prover, Scalar};
 
+/// The elliptic curve prover.
 #[derive(Debug)]
 pub struct EllipticCurveProver {
     config: EllipticCurveConfiguration,
 }
 
+/// Implementation of the elliptic curve prover.
 impl EllipticCurveProver {
+    /// Creates a new elliptic curve prover.
     pub fn new(config: EllipticCurveConfiguration) -> Self {
         EllipticCurveProver { config }
     }
 
+    /// Computes x from the given password.
     fn compute_x(&self, password: String) -> DalekScalar {
         let password_hash = Sha512::digest(password.as_bytes());
         let mut x_bytes = [0u8; 32];
@@ -22,30 +26,37 @@ impl EllipticCurveProver {
         DalekScalar::from_bytes_mod_order(x_bytes)
     }
 
+    /// Generates a random x value.
     fn generate_x(&self) -> DalekScalar {
         generate_random_scalar()
     }
 
+    /// Computes y1 from the given x using the g configuration value.
     fn compute_y1(&self, x: DalekScalar) -> RistrettoPoint {
         self.config.g * x
     }
 
+    /// Computes y2 from the given x using the h configuration value.
     fn compute_y2(&self, x: DalekScalar) -> RistrettoPoint {
         self.config.h * x
     }
 
+    /// Generates a random k value.
     fn generate_k(&self) -> DalekScalar {
         generate_random_scalar()
     }
 
+    /// Computes r1 from the given k using the g configuration value.
     fn compute_r1(&self, k: DalekScalar) -> RistrettoPoint {
         self.config.g * k
     }
 
+    /// Computes r2 from the given k using the h configuration value.
     fn compute_r2(&self, k: DalekScalar) -> RistrettoPoint {
         self.config.h * k
     }
 
+    /// Computes s from the given x, k, and c.
     fn compute_s(&self, x: DalekScalar, k: DalekScalar, c: DalekScalar) -> DalekScalar {
         k + c * x
     }

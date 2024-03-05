@@ -10,12 +10,14 @@ use zkauth_protobuf::v1::{
     GetConfigurationRequest, RegisterRequest, RegisterResponse,
 };
 
+/// User data for the authentication protocol.
 #[derive(Debug)]
 struct User {
     y1: Element,
     y2: Element,
 }
 
+/// Challenge data for the authentication protocol.
 #[derive(Debug, Clone)]
 struct Challenge {
     user: String,
@@ -24,11 +26,13 @@ struct Challenge {
     r2: Element,
 }
 
+/// Session data for the authentication protocol.
 #[derive(Debug, Clone, Copy)]
 struct Session {
     id: Uuid,
 }
 
+/// Service for the authentication protocol.
 pub struct Service {
     verifier: Box<dyn Verifier>,
     configuration: Configuration,
@@ -38,6 +42,7 @@ pub struct Service {
 }
 
 impl Service {
+    /// Creates a new service with the given configuration and verifier.
     pub fn new(configuration: Configuration, verifier: Box<dyn Verifier>) -> Self {
         Self {
             configuration,
@@ -53,8 +58,10 @@ impl Service {
     }
 }
 
+/// Implementation of the authentication protocol.
 #[tonic::async_trait]
 impl Auth for Service {
+    /// Returns the configuration for the authentication protocol.
     async fn get_configuration(
         &self,
         _: Request<GetConfigurationRequest>,
@@ -62,6 +69,11 @@ impl Auth for Service {
         Ok(Response::new(self.configuration.clone()))
     }
 
+    /// Registers a new user with the given y1 and y2, returning an error if the user is already registered.
+    /// # Errors
+    /// * Returns an error if the user is already registered.
+    /// * Returns an error if the user is empty.
+    /// * Returns an error if y1 or y2 is invalid.
     async fn register(
         &self,
         request: Request<RegisterRequest>,
@@ -93,6 +105,10 @@ impl Auth for Service {
 
     /// Creates a new challenge using the given commitment, and returns c in the response along
     /// with the challenge auth id.
+    /// # Errors
+    /// * Returns an error if the user is not found.
+    /// * Returns an error if the user is empty.
+    /// * Returns an error if r1 or r2 is invalid.
     async fn create_authentication_challenge(
         &self,
         request: Request<AuthenticationChallengeRequest>,
@@ -140,6 +156,12 @@ impl Auth for Service {
 
     /// Verifies the given s and creates a new session based on it if necessary, returning the
     /// session id in the response.
+    /// # Errors
+    /// * Returns an error if the challenge is not found.
+    /// * Returns an error if the user is not found.
+    /// * Returns an error if the auth_id argument is empty.
+    /// * Returns an error if s is invalid.
+    /// * Returns an error if the verification fails.
     async fn verify_authentication(
         &self,
         request: Request<AuthenticationAnswerRequest>,
@@ -202,6 +224,7 @@ mod test {
         configuration::DiscreteLogarithmConfiguration, verifier::DiscreteLogarithmVerifier,
     };
 
+    /// Creates a new service for testing.
     fn test_service() -> Service {
         let config = DiscreteLogarithmConfiguration::generate(16);
         let verifier = Box::new(DiscreteLogarithmVerifier::new(config.clone()));
@@ -212,6 +235,7 @@ mod test {
     mod get_configuration {
         use super::*;
 
+        /// Tests that the get_configuration method returns the correct configuration.
         #[tokio::test]
         async fn succeeds_with_discrete_logarithm_config() -> Result<()> {
             let config = DiscreteLogarithmConfiguration::generate(16);
@@ -234,6 +258,7 @@ mod test {
     mod register {
         use super::*;
 
+        /// Tests that the register method succeeds with valid arguments.
         #[tokio::test]
         async fn succeeds() -> Result<()> {
             let verifier = test_service();
@@ -251,6 +276,7 @@ mod test {
             Ok(())
         }
 
+        /// Tests that the register method returns an error when the user is already registered.
         #[tokio::test]
         async fn returns_error_when_user_already_registered() -> Result<()> {
             let verifier = test_service();
@@ -277,6 +303,7 @@ mod test {
             Ok(())
         }
 
+        /// Tests that the register method returns an error when the user is empty.
         #[tokio::test]
         async fn returns_error_when_user_is_empty() -> Result<()> {
             let verifier = test_service();
@@ -295,6 +322,7 @@ mod test {
             Ok(())
         }
 
+        /// Tests that the register method returns an error when y1 is empty.
         #[tokio::test]
         async fn returns_error_when_y1_is_empty() -> Result<()> {
             let verifier = test_service();
@@ -313,6 +341,7 @@ mod test {
             Ok(())
         }
 
+        /// Tests that the register method returns an error when y2 is empty.
         #[tokio::test]
         async fn returns_error_when_y2_is_empty() -> Result<()> {
             let verifier = test_service();
@@ -331,6 +360,7 @@ mod test {
             Ok(())
         }
 
+        /// Tests that the register method returns an error when y1 is not a number.
         #[tokio::test]
         async fn returns_error_when_y1_is_not_a_number() -> Result<()> {
             let verifier = test_service();
@@ -349,6 +379,7 @@ mod test {
             Ok(())
         }
 
+        /// Tests that the register method returns an error when y2 is not a number.
         #[tokio::test]
         async fn returns_error_when_y2_is_not_a_number() -> Result<()> {
             let verifier = test_service();
@@ -372,6 +403,7 @@ mod test {
     mod create_authentication_challenge {
         use super::*;
 
+        /// Tests that the create_authentication_challenge method succeeds with valid arguments.
         #[tokio::test]
         async fn succeeds() -> Result<()> {
             let verifier = test_service();
@@ -398,6 +430,7 @@ mod test {
             Ok(())
         }
 
+        /// Tests that the create_authentication_challenge method returns an error when the user is
         #[tokio::test]
         async fn returns_not_found_when_unknown_user() -> Result<()> {
             let verifier = test_service();
@@ -416,6 +449,7 @@ mod test {
             Ok(())
         }
 
+        /// Tests that the create_authentication_challenge method returns an error when the user is empty.
         #[tokio::test]
         async fn returns_error_when_user_is_empty() -> Result<()> {
             let verifier = test_service();
@@ -434,6 +468,7 @@ mod test {
             Ok(())
         }
 
+        /// Tests that the create_authentication_challenge method returns an error when r1 is empty.
         #[tokio::test]
         async fn returns_error_when_r1_is_empty() -> Result<()> {
             let verifier = test_service();
@@ -452,6 +487,7 @@ mod test {
             Ok(())
         }
 
+        /// Tests that the create_authentication_challenge method returns an error when r2 is empty.
         #[tokio::test]
         async fn returns_error_when_r2_is_empty() -> Result<()> {
             let verifier = test_service();
@@ -470,6 +506,7 @@ mod test {
             Ok(())
         }
 
+        /// Tests that the create_authentication_challenge method returns an error when r1 is not a number.
         #[tokio::test]
         async fn returns_error_when_r1_is_not_a_number() -> Result<()> {
             let verifier = test_service();
@@ -488,6 +525,7 @@ mod test {
             Ok(())
         }
 
+        /// Tests that the create_authentication_challenge method returns an error when r2 is not a number.
         #[tokio::test]
         async fn returns_error_when_r2_is_not_a_number() -> Result<()> {
             let verifier = test_service();
@@ -512,6 +550,7 @@ mod test {
         use super::*;
         use zkauth::{discrete_logarithm::prover::DiscreteLogarithmProver, Prover};
 
+        /// Tests that the verify_authentication method succeeds with valid arguments.
         #[tokio::test]
         async fn succeeds() -> Result<()> {
             let config = DiscreteLogarithmConfiguration::generate(16);
@@ -562,6 +601,7 @@ mod test {
             Ok(())
         }
 
+        /// Tests that the verify_authentication method returns an error when the challenge is not found.
         #[tokio::test]
         async fn returns_not_found_when_unknown_challenge() -> Result<()> {
             let verifier = test_service();
@@ -579,6 +619,7 @@ mod test {
             Ok(())
         }
 
+        /// Tests that the verify_authentication method returns an error when the user is not found.
         #[tokio::test]
         async fn returns_not_found_when_unknown_user() -> Result<()> {
             let verifier = test_service();
@@ -606,6 +647,7 @@ mod test {
             Ok(())
         }
 
+        /// Tests that the verify_authentication method returns an error when the auth_id is empty.
         #[tokio::test]
         async fn returns_error_when_auth_id_is_empty() -> Result<()> {
             let verifier = test_service();
@@ -623,6 +665,7 @@ mod test {
             Ok(())
         }
 
+        /// Tests that the verify_authentication method returns an error when r1 is empty.
         #[tokio::test]
         async fn returns_error_when_r1_is_empty() -> Result<()> {
             let verifier = test_service();
@@ -640,6 +683,7 @@ mod test {
             Ok(())
         }
 
+        /// Tests that the verify_authentication method returns an error when r1 is not a number.
         #[tokio::test]
         async fn returns_error_when_r1_is_not_a_number() -> Result<()> {
             let verifier = test_service();
@@ -657,6 +701,7 @@ mod test {
             Ok(())
         }
 
+        /// Tests that the verify_authentication method returns an error when the verification fails.
         #[tokio::test]
         async fn returns_verification_failed() -> Result<()> {
             let verifier = test_service();

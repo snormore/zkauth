@@ -1,3 +1,5 @@
+//! This module contains the generated protobuf code for the zkauth protocol and grpc service.
+
 use v1::{configuration, Configuration};
 use zkauth::{
     discrete_logarithm::configuration::DiscreteLogarithmConfiguration,

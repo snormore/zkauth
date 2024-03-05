@@ -6,9 +6,16 @@ use std::panic::{self, AssertUnwindSafe};
 #[derive(Debug, Clone)]
 /// Configuration for the discrete logarithm protocol.
 pub struct DiscreteLogarithmConfiguration {
+    /// The prime number.
     pub p: BigInt,
+
+    /// Prime order of the groups that g and h generate.
     pub q: BigInt,
+
+    /// A group generator of prime order q.
     pub g: BigInt,
+
+    /// A group generator of prime order q.
     pub h: BigInt,
 }
 

@@ -4,7 +4,10 @@ use sha2::{Digest, Sha512};
 #[derive(Debug, Clone)]
 /// Configuration for the elliptic curve protocol using ristretto points.
 pub struct EllipticCurveConfiguration {
+    /// The generator ristretto point g.
     pub g: RistrettoPoint,
+
+    /// The generator ristretto point h.
     pub h: RistrettoPoint,
 }
 

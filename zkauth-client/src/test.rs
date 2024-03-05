@@ -12,6 +12,7 @@ use zkauth_protobuf::v1::{
     RegisterResponse,
 };
 
+/// Creates a mock client for testing.
 pub async fn mock_client() -> Result<AuthClient<Channel>> {
     let (client, server) = tokio::io::duplex(1024);
 
@@ -47,6 +48,7 @@ pub async fn mock_client() -> Result<AuthClient<Channel>> {
 #[derive(Default)]
 pub struct MockVerifier {}
 
+/// Mock implementation of the verifier.
 #[tonic::async_trait]
 impl Auth for MockVerifier {
     async fn get_configuration(

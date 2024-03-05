@@ -11,7 +11,7 @@ mod main {
     #[test]
     fn succeeds() -> Result<(), Box<dyn std::error::Error>> {
         let mut cmd = Command::cargo_bin("zkauth-server")?
-            .arg("--prime-bits=16")
+            .arg("--config-prime-bits=16")
             .stderr(Stdio::piped())
             .spawn()?;
 
