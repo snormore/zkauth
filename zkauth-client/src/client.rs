@@ -78,8 +78,8 @@ impl Client {
             .prover
             .compute_registration_y1y2(self.x.clone())
             .map_err(|_| Status::internal("failed to compute registration y1 and y2"))?;
-        log::debug!("y1 = {:?}", y1);
-        log::debug!("y2 = {:?}", y2);
+        log::info!("y1 = {:?}", y1);
+        log::info!("y2 = {:?}", y2);
 
         // Send register request.
         let resp = self
@@ -93,7 +93,7 @@ impl Client {
             .await?
             .into_inner();
 
-        log::debug!("{:?}", resp);
+        log::info!("{:?}", resp);
 
         Ok(())
     }
@@ -111,8 +111,8 @@ impl Client {
             .prover
             .compute_challenge_commitment_r1r2(k.clone())
             .map_err(|_| Status::internal("failed to compute challenge commitment"))?;
-        log::debug!("r1 = {:?}", r1);
-        log::debug!("r2 = {:?}", r2);
+        log::info!("r1 = {:?}", r1);
+        log::info!("r2 = {:?}", r2);
 
         // Send create_authentication_challenge request.
         let resp = self
@@ -126,7 +126,7 @@ impl Client {
             .await?
             .into_inner();
 
-        log::debug!("{:?}", resp);
+        log::info!("{:?}", resp);
 
         let c: Scalar = resp
             .c
@@ -138,7 +138,7 @@ impl Client {
             .prover
             .compute_challenge_response_s(self.x.clone(), k, c)
             .map_err(|_| Status::internal("failed to compute challenge response s"))?;
-        log::debug!("s = {:?}", s);
+        log::info!("s = {:?}", s);
 
         // Send verify_authentication request.
         let resp = self
@@ -151,7 +151,7 @@ impl Client {
             .await?
             .into_inner();
 
-        log::debug!("{:?}", resp);
+        log::info!("{:?}", resp);
 
         Ok(())
     }
