@@ -77,3 +77,17 @@ impl Verifier for EllipticCurveVerifier {
         Ok((r1.into(), r2.into()))
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::elliptic_curve::test::test_verifier;
+    use num_traits::Zero;
+
+    #[test]
+    fn test_generate_challenge_c() {
+        let verifier = test_verifier();
+        let c = verifier.generate_challenge_c();
+        assert!(c > Scalar::zero());
+    }
+}

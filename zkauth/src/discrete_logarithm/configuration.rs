@@ -75,3 +75,26 @@ fn generate_generator_g(p: BigInt, q: BigInt) -> BigInt {
     }
     g
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn generate() {
+        let config = DiscreteLogarithmConfiguration::generate(16);
+        assert!(config.q < config.p);
+        assert_eq!(config.g.modpow(&config.q, &config.p), One::one());
+        assert_eq!(config.h.modpow(&config.q, &config.p), One::one());
+    }
+
+    #[test]
+    fn generate_from_prime() {
+        let p = BigInt::from(23);
+        let config = DiscreteLogarithmConfiguration::generate_from_prime(p.clone());
+        assert_eq!(config.p, p);
+        assert!(config.q < config.p);
+        assert_eq!(config.g.modpow(&config.q, &config.p), One::one());
+        assert_eq!(config.h.modpow(&config.q, &config.p), One::one());
+    }
+}

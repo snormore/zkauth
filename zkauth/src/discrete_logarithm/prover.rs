@@ -103,3 +103,81 @@ impl Prover for DiscreteLogarithmProver {
         Ok(self.compute_s(x.into(), k.into(), c.into()).into())
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::discrete_logarithm::test::test_prover;
+
+    #[test]
+    fn generate_registration_x() {
+        let prover = test_prover();
+        let x1 = prover.generate_registration_x();
+        assert!(x1 > Scalar::zero());
+        let x2 = prover.generate_registration_x();
+        assert!(x2 > Scalar::zero());
+        assert_ne!(x1, x2);
+    }
+
+    #[test]
+    fn compute_registration_x_with_password() {
+        let prover = test_prover();
+        let x1 = prover.compute_registration_x("password".to_string());
+        assert!(x1 > Scalar::zero());
+        let x2 = prover.compute_registration_x("password".to_string());
+        assert!(x2 > Scalar::zero());
+        assert_eq!(x1, x2);
+        let x3 = prover.compute_registration_x("password2".to_string());
+        assert!(x3 > Scalar::zero());
+        assert_ne!(x1, x3);
+    }
+
+    #[test]
+    fn compute_registration_x_with_empty_password() {
+        let prover = test_prover();
+        let x = prover.compute_registration_x("".to_string());
+        assert!(x > Scalar::zero());
+    }
+
+    #[test]
+    fn compute_registration_y1y2() {
+        let prover = test_prover();
+        let x = prover.generate_x();
+        let (y1, y2) = prover.compute_registration_y1y2(x.into()).unwrap();
+        assert!(y1 > Element::zero());
+        assert!(y2 > Element::zero());
+        assert_ne!(y1, y2);
+    }
+
+    #[test]
+    fn generate_challenge_k() {
+        let prover = test_prover();
+        let k1 = prover.generate_challenge_k();
+        assert!(k1 > Scalar::zero());
+        let k2 = prover.generate_challenge_k();
+        assert!(k2 > Scalar::zero());
+        assert_ne!(k1, k2);
+    }
+
+    #[test]
+    fn compute_challenge_commitment_r1r2() {
+        let prover = test_prover();
+        let k = prover.generate_k();
+        let (r1, r2) = prover.compute_challenge_commitment_r1r2(k.into()).unwrap();
+        assert!(r1 > Element::zero());
+        assert!(r2 > Element::zero());
+        assert_ne!(r1, r2);
+    }
+
+    #[test]
+    fn compute_challenge_response_s() {
+        let prover = test_prover();
+        let x = prover.generate_x();
+        let k = prover.generate_k();
+        let c = generate_random_scalar();
+        let s = prover
+            .compute_challenge_response_s(x.into(), k.into(), c.into())
+            .unwrap();
+        assert!(s > Scalar::zero());
+    }
+}

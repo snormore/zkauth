@@ -129,11 +129,12 @@ impl Options {
     /// Initializes the logger based on the verbosity level.
     fn init_logger(&self) {
         if self.verbose.is_present() {
-            env_logger::Builder::new()
+            let _ = env_logger::Builder::new()
                 .filter_level(self.verbose.log_level_filter())
-                .init();
+                .try_init();
         } else {
-            env_logger::Builder::from_env(Env::default().default_filter_or("info")).init();
+            let _ =
+                env_logger::Builder::from_env(Env::default().default_filter_or("info")).try_init();
         }
     }
 }
@@ -382,6 +383,27 @@ mod options {
     fn verbose() -> Result<()> {
         let opts = Options::parse_from(vec!["bin", "-v"]);
         assert_eq!(opts.verbose.log_level_filter(), log::LevelFilter::Debug);
+        Ok(())
+    }
+
+    #[test]
+    fn init_logger_verbose() -> Result<()> {
+        let opts = Options::parse_from(vec!["bin", "-v"]);
+        opts.init_logger();
+        Ok(())
+    }
+
+    #[test]
+    fn init_logger_quiet() -> Result<()> {
+        let opts = Options::parse_from(vec!["bin", "-q"]);
+        opts.init_logger();
+        Ok(())
+    }
+
+    #[test]
+    fn init_logger_debug() -> Result<()> {
+        let opts = Options::parse_from(vec!["bin", "-vv"]);
+        opts.init_logger();
         Ok(())
     }
 }

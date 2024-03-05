@@ -12,6 +12,9 @@ pub mod prover;
 /// The verifier module.
 pub mod verifier;
 
+#[cfg(test)]
+mod test;
+
 /// Generates a random scalar.
 fn generate_random_scalar() -> DalekScalar {
     let mut rng = rand::thread_rng();
@@ -60,5 +63,51 @@ impl From<RistrettoPoint> for Element {
     fn from(value: RistrettoPoint) -> Self {
         let v = value.compress().to_bytes();
         Element(BigInt::from_bytes_le(Sign::Plus, &v))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use curve25519_dalek::constants::RISTRETTO_BASEPOINT_POINT;
+    use num_bigint::{BigUint, RandomBits};
+    use num_traits::{One, Zero};
+    use rand::Rng;
+
+    fn generate_random_bigint() -> BigInt {
+        let mut rng = rand::thread_rng();
+        let num: BigUint = rng.sample(RandomBits::new(32));
+        let signed_num: BigInt = num.clone().into();
+        signed_num
+    }
+
+    #[test]
+    fn test_generate_random_scalar() {
+        let scalar = generate_random_scalar();
+        let scalar: Scalar = scalar.into();
+        assert!(scalar > Scalar::zero());
+    }
+
+    #[test]
+    fn try_from_scalar_to_dalek_scalar() {
+        let value: Scalar = generate_random_bigint().into();
+        let scalar: DalekScalar = value.clone().try_into().unwrap();
+        let scalar: Scalar = scalar.into();
+        assert_eq!(value, scalar);
+    }
+
+    #[test]
+    fn try_from_element_to_ristretto_point() {
+        let value: Element = RISTRETTO_BASEPOINT_POINT.into();
+        let element: RistrettoPoint = value.clone().try_into().unwrap();
+        let element: Element = element.into();
+        assert_eq!(value, element);
+    }
+
+    #[test]
+    fn try_from_element_to_ristretto_point_error() {
+        let value: Element = BigInt::one().into();
+        let element: Result<RistrettoPoint, ConversionError> = value.clone().try_into();
+        assert!(element.is_err());
     }
 }

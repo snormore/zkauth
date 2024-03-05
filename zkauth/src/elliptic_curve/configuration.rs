@@ -35,3 +35,14 @@ impl EllipticCurveConfiguration {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn generate() {
+        let config = EllipticCurveConfiguration::generate();
+        assert_ne!(config.g, config.h);
+    }
+}
