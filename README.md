@@ -30,7 +30,7 @@ This repository provides a Rust library implementing the [Chaum-Pedersen protoco
 
 The library supports two flavors:
 
-### Discrete Logarithm
+### [Discrete Logarithm](./zkauth/src/discrete_logarithm)
 
 The classic Chaum-Pedersen protocol is a cryptographic technique mainly used for proving that two discrete logarithms are equal and that they correspond to the same base without revealing the actual values. This protocol is commonly utilized in privacy-preserving cryptographic systems such as electronic voting schemes and zero-knowledge proof constructions.
 
@@ -44,7 +44,7 @@ Here are the steps of the Chaum-Pedersen protocol:
 
 The protocol ensures that the prover knows the discrete logarithm $x$ without revealing it. The security of the protocol relies on the difficulty of computing discrete logarithms in the group $G$.
 
-### Elliptic Curve
+### [Elliptic Curve](./zkauth/src/elliptic_curve)
 
 Adapting the Chaum-Pedersen protocol to elliptic curves involves leveraging the elliptic curve discrete logarithm problem (ECDLP) instead of the classical discrete logarithm problem in a cyclic group. The fundamental principles remain similar, but the operations are adapted to the properties and operations of elliptic curves.
 
