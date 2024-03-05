@@ -32,13 +32,28 @@
 //! zkauth-server --config-generate --config-path=config.json
 //! ```
 //!
-//! The configuration file can be used to specify the public parameters for the zkauth protocol.
+//! You can specify the configuration flavor using the `--config-flavor` option, and the number of
+//! bits for the prime number using the `--config-prime-bits` option, or specify a prime number
+//! directly using the `--config-prime` option.
+//!
+//! ```sh
+//! zkauth-server --config-generate --config-path=config.json --config-flavor=elliptic-curve
+//! ```
+//!
+//! ```sh
+//! zkauth-server --config-generate --config-path=config.json --config-prime-bits=256
+//! ```
+//!
+//! ```sh
+//! zkauth-server --config-generate --config-path=config.json --config-prime=42765216643065397982265462252423826320512529931694366715111734768493812630447
+//! ```
 
 use anyhow::{Error, Result};
 use clap::{Parser, ValueEnum};
 use clap_verbosity_flag::{InfoLevel, Verbosity};
 use env_logger::Env;
 use futures_util::FutureExt;
+use num_bigint::BigInt;
 use std::fs::File;
 use std::path::Path;
 use strum_macros::{Display, EnumString, VariantNames};
@@ -95,6 +110,10 @@ pub struct Options {
     /// Specifies the number of bits to use for generating prime numbers for the public parameters.
     #[arg(long, default_value_t = 256)]
     config_prime_bits: usize,
+
+    /// Specifies a prime number to use for generating the configuration.
+    #[arg(long)]
+    config_prime: Option<String>,
 }
 
 /// Configuration flavor.
@@ -194,7 +213,14 @@ async fn main() -> Result<()> {
                 config
             }
             _ => {
-                let config = DiscreteLogarithmConfiguration::generate(opts.config_prime_bits);
+                let config = match opts.config_prime {
+                    Some(prime) => {
+                        let prime: BigInt = prime.parse().expect("Failed to parse prime number");
+                        log::info!("Using specified prime number for configuration: {}", prime);
+                        DiscreteLogarithmConfiguration::generate_from_prime(prime)
+                    }
+                    None => DiscreteLogarithmConfiguration::generate(opts.config_prime_bits),
+                };
                 let config = config.into();
                 let config_json = serde_json::to_string_pretty(&config).map_err(|e| {
                     log::error!("Failed to serialize configuration: {}", e);
