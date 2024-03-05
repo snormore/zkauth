@@ -1,49 +1,21 @@
 # Zero Knowledge Authentication
 
-This repository provides a Rust library implementing the [Chaum-Pedersen protocol](https://en.wikipedia.org/wiki/Publicly_Verifiable_Secret_Sharing#Chaum-Pedersen_Protocol), enabling the creation of zero-knowledge proofs for cryptographic verification while ensuring privacy. It includes a gRPC server and client that build on the library, allowing for integration into applications that utilize the protocol to register and authenticate users. While the Chaum-Pedersen protocol was initially designed for discrete logarithms, this implementation also supports elliptic curves.
+This repository provides a Rust library implementing the Chaum-Pedersen protocol, enabling the creation of zero-knowledge proofs for cryptographic verification while ensuring privacy. The project implements two flavors of the Chaum-Pedersen cryptographic proofs; one using discrete logarithms and the other using elliptive curves. These mechanisms allow a prover to demonstrate knowledge of a secret corresponding to a public value without revealing the secret itself. The project also includes a gRPC server and client implementation for integration into applications that wish to utilize the protocol to register and authenticate users.
 
 [![codecov](https://codecov.io/gh/snormore/zkauth/graph/badge.svg?token=JN2KIKA175)](https://codecov.io/gh/snormore/zkauth)
 
-[Crate Docs](https://snormore.github.io/zkauth)
-
-## Overview
-
-The [Chaum-Pedersen protocol](https://en.wikipedia.org/wiki/Publicly_Verifiable_Secret_Sharing#Chaum-Pedersen_Protocol) is used to securely prove that the discrete logarithms of two numbers with respect to different bases are equal, without revealing the actual logarithms. Below is a step-by-step breakdown of the protocol:
-
-1. Setup:
-
-   - Let there be a finite group `G` with a common known base `g` and `h`.
-   - Assume values `y = g^x` and `z = h^x` for some secret `x`.
-   - The goal is to prove that the same `x` is used in both `y` and `z` without revealing `x`.
-
-2. Commitment:
-
-   - The prover selects a random value `k`.
-   - Computes `a = g^k` and `b = h^k`.
-   - Sends `a` and `b` to the verifier as the commitment.
-
-3. Challenge:
-
-   - The verifier sends a random number `c` to the prover as a challenge.
-
-4. Response:
-
-   - The prover computes the response `r = k + cx` (operations are done in the field corresponding to `G`).
-   - Sends `r` back to the verifier.
-
-5. Verification:
-   - The verifier checks whether `g^r = a * y^c` and `h^r = b * z^c`.
-   - If both equations hold, the verifier is convinced that the prover knows `x`.
-
-This protocol ensures the prover cannot cheat without knowing the discrete logarithm `x`, and the verifier learns nothing about `x` except whether the prover knows it. The zero-knowledge aspect ensures that no additional information about `x` is revealed.
+[Docs](https://snormore.github.io/zkauth)
 
 ## Features
 
-- Chaum-Pedersen non-interactive zero-knowldge authentication.
-- Discrete logarithm flavor using exponentiation over groups of prime order.
-- Elliptic curve flavor using risettro points via [curve25519-dalek](https://docs.rs/curve25519-dalek/latest/curve25519_dalek/ristretto/index.html).
-- Client and server gRPC implementations wrapping the prover and verifier of the protocol, abstracting into register and login workflows.
-- The server and demo CLI are available as Docker containers for reproduceable instantiation.
+- Chaum-Pedersen protocol-based gRPC authentication service.
+- Discrete logarithm flavor using BigInt via [num-bigint](https://github.com/rust-num/num-bigint).
+- Elliptic curve flavor using Ristretto points with [curve25519-dalek](https://github.com/dalek-cryptography/curve25519-dalek).
+- gRPC client/server for protocol operations.
+- Server and CLI client.
+- External user storage and challenge data cache.
+- Docker setup for local testing.
+- Terraform for AWS deployment.
 
 ## Project Layout
 
@@ -53,6 +25,38 @@ This protocol ensures the prover cannot cheat without knowing the discrete logar
 - [`zkauth-client`](./zkauth-client): Implementation of the gRPC service client as defined in [`zkauth-protobuf/v1.proto`](./zkauth-protobuf/v1.proto). This component acts as the prover in the Chaum-Pedersen protocol.
 - [`zkauth-demo-cli`](./zkauth-demo-cli): A simple command-line interface for acting as the client, and hence the prover, to interact with the gRPC service.
 - [`tests`](./zkauth): A suite of functional tests that encode the expectations of the client/prover and server/verifier in an end-to-end way.
+
+## Chaum-Pedersen Proofs
+
+The library supports two flavors:
+
+### Discrete Logarithm
+
+The classic Chaum-Pedersen protocol is a cryptographic technique mainly used for proving that two discrete logarithms are equal and that they correspond to the same base without revealing the actual values. This protocol is commonly utilized in privacy-preserving cryptographic systems such as electronic voting schemes and zero-knowledge proof constructions.
+
+Here are the steps of the Chaum-Pedersen protocol:
+
+1. **Setup**: The prover and verifier agree on a prime $p$ and a generator $g$ of a cyclic group $G$ of order $q$, where $q$ is a large prime factor of $p-1$. The prover knows a secret $x$, which is the discrete logarithm of both $y = g^x \mod p$ and $z = h^x \mod p$ to the bases $g$ and $h$, respectively. Note that $h$ is another element of $G$, and the equality of logarithms $\log_g(y) = \log_h(z) = x$ is what the prover intends to prove without revealing $x$.
+2. **Commitment**: The prover selects a random value $r$ from the group $G$ and computes two commitments $a = g^r \mod p$ and $b = h^r \mod p$. The prover then sends the commitments $a$ and $b$ to the verifier.
+3. **Challenge**: The verifier sends a random challenge $c$ to the prover. This challenge is typically a random number selected from a range that ensures security, such as the order of the group $q$.
+4. **Response**: Upon receiving the challenge $c$, the prover computes the response $s = r - c \cdot x \mod q$ and sends $s$ to the verifier.
+5. **Verification**: The verifier checks the validity of the prover's response by ensuring that both $g^s = a \cdot y^c \mod p$ and $h^s = b \cdot z^c \mod p$ hold true. If both equations are satisfied, the verifier accepts the proof; otherwise, the proof is rejected.
+
+The protocol ensures that the prover knows the discrete logarithm $x$ without revealing it. The security of the protocol relies on the difficulty of computing discrete logarithms in the group $G$.
+
+### Elliptic Curve
+
+Adapting the Chaum-Pedersen protocol to elliptic curves involves leveraging the elliptic curve discrete logarithm problem (ECDLP) instead of the classical discrete logarithm problem in a cyclic group. The fundamental principles remain similar, but the operations are adapted to the properties and operations of elliptic curves.
+
+Here's how the steps adapt:
+
+1. **Setup**: Instead of agreeing on a prime $p$ and a generator $g$ of a cyclic group, the prover and verifier agree on an elliptic curve $E$ defined over a finite field and a base point $G$ on $E$ of prime order $q$. The prover knows a secret scalar $x$, which corresponds to the discrete logarithm (with respect to base point $G$) of two points $Y = xG$ and $Z = xH$ on the elliptic curve, where $H$ is another point on the curve. The prover intends to demonstrate that $\log_G(Y) = \log_H(Z) = x$ without revealing $x$.
+2. **Commitment**: The prover picks a random scalar $r$ from the set $1, ..., q-1$ and computes two commitment points $A = rG$ and $B = rH$ on the elliptic curve. These commitments $A$ and $B$ are then sent to the verifier.
+3. **Challenge**: The verifier generates a random challenge scalar $c$ and sends it to the prover. This challenge is again a random scalar from the set $1, ..., q-1$.
+4. **Response**: Upon receiving $c$, the prover calculates the response scalar $s = r + cx \mod q$ and sends $s$ back to the verifier.
+5. **Verification**: The verifier receives $s$ and validates the prover’s claims by checking if $sG = A + cY$ and $sH = B + cZ$ on the elliptic curve. If both equations hold, the prover's claim is accepted; otherwise, it is rejected.
+
+Adapting the protocol to elliptic curves maintains the privacy and security characteristics of the original Chaum-Pedersen protocol while leveraging the added security benefits and efficiency of elliptic curve cryptography, which typically allows for shorter key sizes compared to traditional discrete logarithm-based systems for a comparable level of security. The main changes involve moving from multiplicative group operations to additive elliptic curve group operations and from working with integers modulo a prime to working with points on an elliptic curve.
 
 ## Getting Started
 
