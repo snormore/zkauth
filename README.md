@@ -19,11 +19,11 @@ This repository provides a Rust library implementing the [Chaum-Pedersen protoco
 
 ## Project Layout
 
-- [`zkauth`](./zkauth): Core library implementing the [`discrete_logarithm`](./zkauth/src/discrete_logarithm) and [`elliptic_curve`](./zkauth/src/elliptic_curve) flavors of the protocol, with operations defined in `prover.rs` and `verifier.rs` for each.
+- [`zkauth`](./zkauth): Core library implementing the [`discrete_logarithm`](./zkauth/src/discrete_logarithm) and [`elliptic_curve`](./zkauth/src/elliptic_curve) flavors of the protocol.
 - [`zkauth-protobuf`](./zkauth-protobuf): Generated protobuf types and stubs for the gRPC service.
-- [`zkauth-server`](./zkauth-server): Implementation of the gRPC service as defined in [`zkauth-protobuf/v1.proto`](./zkauth-protobuf/v1.proto), and a binary definition used for execution of the server. This component acts as the verifier in the Chaum-Pedersen protocol.
-- [`zkauth-client`](./zkauth-client): Implementation of the gRPC service client as defined in [`zkauth-protobuf/v1.proto`](./zkauth-protobuf/v1.proto). This component acts as the prover in the Chaum-Pedersen protocol.
-- [`zkauth-demo-cli`](./zkauth-demo-cli): A simple command-line interface for acting as the client, and hence the prover, to interact with the gRPC service.
+- [`zkauth-server`](./zkauth-server): Implementation of the gRPC service, acting as the verifier in the Chaum-Pedersen protocol. Includes a CLI entrypoint used for execution of the server.
+- [`zkauth-client`](./zkauth-client): Implementation of the gRPC service client, acting as the prover in the Chaum-Pedersen protocol.
+- [`zkauth-demo-cli`](./zkauth-demo-cli): A simple CLI for interacting with the server as the client.
 - [`tests`](./zkauth): A suite of functional tests that encode the expectations of the client/prover and server/verifier in an end-to-end way.
 
 ## Chaum-Pedersen Proofs
@@ -223,13 +223,6 @@ or
 docker-compose up -d --build
 ```
 
-## Future Work
-
-The project can be considered a proof-of-concept, and does not yet have certain features that would be required for production use:
-
-- Users are stored in memory in a hash map in the gRPC service instance, and so will not persist across restarts. This should ideally be stored in a more stable, permanant location, such as a SQL DB or external key value store. This would also allow for high-availability of the server instances, with support for multiple stateless instances.
-- Challenges and sessions are stored in memory in a TTL cache, and so will not persist across restarts. This should ideally be stored in a more stable location, such as Redis or a caching key value store, so that multiple instances of the server can interace for high-availability and better scalability.
-
 ## License
 
 This project is licensed under the [MIT license](LICENSE).
@@ -241,14 +234,15 @@ This project is licensed under the [MIT license](LICENSE).
 - [Chaum-Pedersen Protocol](https://en.wikipedia.org/wiki/Publicly_Verifiable_Secret_Sharing#Chaum-Pedersen_Protocol) on Wikipedia
 - [Chaum-Pedersen Protocol](https://crypto.stackexchange.com/questions/99262/chaum-pedersen-protocol) question on StackExchange
 - [Chaum-Pedersen protocol adapted to elliptic curves](https://crypto.stackexchange.com/questions/105889/chaum-pedersen-protocol-adapted-to-elliptic-curves?noredirect=1#comment226693_105889) question on StackExchange
-- Existing, similar projects:
-  - https://github.com/twilker/cp-zkp
-  - https://github.com/kobby-pentangeli/chaum-pedersen-zkp
-  - https://github.com/adrianperezkeilty/Chaum-Pedersen-Protocol
-  - https://github.com/gagiuntoli/zkp_chaum_pedersen
-  - https://github.com/neongazer/zkp-auth-py
-  - https://github.com/SoftwareSecurityLab/Chaum-Pedersen
-  - https://github.com/georgemakrakis/Chaum-Pedersen_NI-ZKP
+- [Chaum-Pedersen Protocol Explained](https://chat.openai.com/share/6cb8677a-add5-484e-a2c4-706742f8275a) for discrete logarithms and elliptic curves via ChatGPT
+- Similar projects:
+  - [twilker/cp-zkp](https://github.com/twilker/cp-zkp)
+  - [kobby-pentangeli/chaum-pedersen-zkp](https://github.com/kobby-pentangeli/chaum-pedersen-zkp)
+  - [adrianperezkeilty/Chaum-Pedersen-Protocol](https://github.com/adrianperezkeilty/Chaum-Pedersen-Protocol)
+  - [gagiuntoli/zkp_chaum_pedersen](https://github.com/gagiuntoli/zkp_chaum_pedersen)
+  - [neongazer/zkp-auth-py](https://github.com/neongazer/zkp-auth-py)
+  - [SoftwareSecurityLab/Chaum-Pedersen](https://github.com/SoftwareSecurityLab/Chaum-Pedersen)
+  - [georgemakrakis/Chaum-Pedersen_NI-ZKP](https://github.com/georgemakrakis/Chaum-Pedersen_NI-ZKP)
 
 ## Appendix
 
