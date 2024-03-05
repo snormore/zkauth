@@ -46,7 +46,7 @@ jobs:
           cargo doc --lib --no-deps
           rm -f target/doc/.lock
           cp -r target/doc _site
-          echo "<meta http-equiv=\"refresh\" content=\"0; url=zkauth_server\">" > _site/index.html
+          echo "<meta http-equiv=\"refresh\" content=\"0; url=zkauth\">" > _site/index.html
           chmod -R +rX _site
 
       - name: Upload artifact
