@@ -1,24 +1,11 @@
 // Enforce documentation for all public items in the crate.
 #![warn(missing_docs)]
 
-//! This crate provides a set of tools for zero-knowledge proof authentication.
-//!
-//! The main components are:
-//! - `elliptic_curve`: A module for working with elliptic curves.
-//! - `discrete_logarithm`: A module for working with discrete logarithm protocols.
-//! - `prover`: A module for implementing a prover for a zero-knowledge proof.
-//! - `verifier`: A module for implementing a verifier for a zero-knowledge proof.
-//!
-//! The main traits are:
-//! - `Prover`: A trait for implementing a prover for a zero-knowledge proof.
-//! - `Verifier`: A trait for implementing a verifier for a zero-knowledge proof.
-//!
-//! The main types are:
-//! - `Scalar`: A type for a scalar value.
-//! - `Element`: A type for an element value.
-//!
-//! The main errors are:
-//! - `ConversionError`: An error for when a conversion fails.
+//! This crate provides a set of tools for zero-knowledge proof authentication using
+//! Chaum-Pedersen zero-knowledge proofs. It implements two flavors of the Chaum-Pedersen
+//! cryptographic proofs; discrete logarithms and elliptive curves. These mechanisms allow a prover
+//! to demonstrate knowledge of a secret corresponding to a public value without revealing the
+//! secret itself.
 
 use anyhow::Result;
 use num_bigint::BigInt;
