@@ -30,39 +30,19 @@ This repository provides a Rust library implementing the [Chaum-Pedersen protoco
 
 The authentication workflows are as follows:
 
-### Registration
+<details>
+<summary><b>Registration</b></summary>
 
-```mermaid
-sequenceDiagram
-    note over Client: Compute (y2, y2)<br />from password x
-    Client->>+Server: Register (user, (y1, y2))
-    Server->>Store: Store (user, (y1, y2))
-    Server->>-Client: Return ()
-```
+[![](https://mermaid.ink/img/pako:eNqFkDFuwzAMRa9CcLJRB0UzCoWX9ATxqkW1vlMDluRSVFsjyN2rxshcLiSE_x5IXXlMHmw447Mgjnib3UVcsJFqxaSg9AWh0zIjqqFTCmupj8127Gg7tq_vQs_9JCnQ6nL-TuLpZ4d35ND3TwOkOgydcZmzVltTMqSrkpe7pN2BPVaBQZPA0L39lz08NjtDi0RqWu44QIKbfT3r-he3rB8IsGzq6DG5sqhlG2816oqmYYsjG5WCjsvqnT5-gc3klozbL_maX6M?type=png)](https://mermaid.live/edit#pako:eNqFkDFuwzAMRa9CcLJRB0UzCoWX9ATxqkW1vlMDluRSVFsjyN2rxshcLiSE_x5IXXlMHmw447Mgjnib3UVcsJFqxaSg9AWh0zIjqqFTCmupj8127Gg7tq_vQs_9JCnQ6nL-TuLpZ4d35ND3TwOkOgydcZmzVltTMqSrkpe7pN2BPVaBQZPA0L39lz08NjtDi0RqWu44QIKbfT3r-he3rB8IsGzq6DG5sqhlG2816oqmYYsjG5WCjsvqnT5-gc3klozbL_maX6M)
 
-### Login
+</details>
 
-```mermaid
-sequenceDiagram
-    note over Client: Generate k
-    note over Client: Compute commitment<br />(r1, r2)
-    Client->>+Server: Create challenge (user, (r1, r2))
-    Server->>Store: Validate user exists
-    Store-->>Server:
-    Server->>Store: Cache (challenge, (user, c, r1, r2))
-    note over Server: Generate c
-    Server->>Client: Return (challenge, c)
-    note over Client: Compute challenge<br />response s
-    Client->>Server: Verify (challenge, s)
-    Server->>Store: Get (challenge, (user, c, r1, r2))
-    Store-->>Server:
-    Server->>Store: Get (user, (y1, y2))
-    Store-->>Server:
-    note over Server: Compute (r1', r2')
-    note over Server: Validate that<br />r1' == challenge.r1 and<br />r2' == challenge.r2
-    Server->>Store: Cache (s, session)
-    Server->>-Client: Return (session)
-```
+<details>
+<summary><b>Login</b></summary>
+
+[![](https://mermaid.ink/img/pako:eNqVkzFvwjAQhf-K5QVQQysyRoWFSt0biSmL6xzEamzTs10pQvz3npUYRFoo9Wi_9-7us33g0tbAC-7gM4CR8KLEDoWuDKNlrAdmvwDZulVgfMFewQAK2v24plhbvQ-0Ka3Wymvae35H9rSa4iJjmM96X6-er1YPJSDZyYcQc2Uj2hbMDtg0OMCMJd9g7OVkLL1FiA35k7IjZXdWRsE8KocKvweshWyo2KluluIklb0ofZ41JZ5oyFF2gvEGPqC5SJezP8klcQ8Owe2tccDcCF3qYgOott1FEXeL1h2j3snu3_B_IkxD0zVPYgeTq7A3olV1hO0bMbwp8rDl8gzsERdMmHo4zMeH-c0X4AgbOKesGcObj68z6XjGNaAWqqYfdIiuivsGNFScJuY1bEVofcUrcySpCN6WnZG88Bgg42Efxxk-HC-2onVw_AZZLyWO?type=png)](https://mermaid.live/edit#pako:eNqVkzFvwjAQhf-K5QVQQysyRoWFSt0biSmL6xzEamzTs10pQvz3npUYRFoo9Wi_9-7us33g0tbAC-7gM4CR8KLEDoWuDKNlrAdmvwDZulVgfMFewQAK2v24plhbvQ-0Ka3Wymvae35H9rSa4iJjmM96X6-er1YPJSDZyYcQc2Uj2hbMDtg0OMCMJd9g7OVkLL1FiA35k7IjZXdWRsE8KocKvweshWyo2KluluIklb0ofZ41JZ5oyFF2gvEGPqC5SJezP8klcQ8Owe2tccDcCF3qYgOott1FEXeL1h2j3snu3_B_IkxD0zVPYgeTq7A3olV1hO0bMbwp8rDl8gzsERdMmHo4zMeH-c0X4AgbOKesGcObj68z6XjGNaAWqqYfdIiuivsGNFScJuY1bEVofcUrcySpCN6WnZG88Bgg42Efxxk-HC-2onVw_AZZLyWO)
+
+</details>
 
 ## Chaum-Pedersen Proofs
 
