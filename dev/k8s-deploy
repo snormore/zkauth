@@ -7,13 +7,13 @@ which ! kubeclt &>/dev/null && echo "kubectl is not installed" && exit 1
 CONTAINER_TAG="${CONTAINER_TAG:-dev2}"
 
 SERVER_CONTAINER_IMAGE="snormore/zkauth-server:${CONTAINER_TAG}"
-DEMO_CLI_CONTAINER_IMAGE="snormore/zkauth-demo-cli:${CONTAINER_TAG}"
+CLIENT_CONTAINER_IMAGE="snormore/zkauth-client:${CONTAINER_TAG}"
 
-# Build and push the server and demo-cli container images.
+# Build and push the server and client container images.
 docker buildx build --platform linux/amd64 -f zkauth-server/Dockerfile -t "${SERVER_CONTAINER_IMAGE}" .
-docker buildx build --platform linux/amd64 -f zkauth-demo-cli/Dockerfile -t "${DEMO_CLI_CONTAINER_IMAGE}" .
+docker buildx build --platform linux/amd64 -f zkauth-client/Dockerfile -t "${CLIENT_CONTAINER_IMAGE}" .
 docker push "${SERVER_CONTAINER_IMAGE}"
-docker push "${DEMO_CLI_CONTAINER_IMAGE}"
+docker push "${CLIENT_CONTAINER_IMAGE}"
 
 # Deploy server to the k8s cluster.
 kubectl apply -f - <<EOF
@@ -52,18 +52,18 @@ spec:
     app: zkauth-server
 EOF
 
-# Deploy demo-cli to the k8s cluster.
-kubectl delete pod zkauth-demo-cli || true
+# Deploy client to the k8s cluster.
+kubectl delete pod zkauth-client || true
 kubectl apply -f - <<EOF
 apiVersion: v1
 kind: Pod
 metadata:
-  name: zkauth-demo-cli
+  name: zkauth-client
 spec:
   restartPolicy: Never
   containers:
-    - name: zkauth-demo-cli
-      image: "${DEMO_CLI_CONTAINER_IMAGE}"
+    - name: zkauth-client
+      image: "${CLIENT_CONTAINER_IMAGE}"
       command: ["sleep", "infinity"]
       env:
         - name: ZKAUTH_ADDRESS

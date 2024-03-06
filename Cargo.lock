@@ -2071,35 +2071,22 @@ name = "zkauth-client"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "assert_cmd",
+ "clap",
+ "clap-verbosity-flag",
  "curve25519-dalek",
+ "env_logger",
  "log",
  "num-bigint 0.4.4",
  "num-traits",
+ "predicates",
  "rand 0.8.5",
  "tokio",
  "tokio-stream",
  "tonic",
  "tower",
- "zkauth",
- "zkauth-protobuf",
-]
-
-[[package]]
-name = "zkauth-demo-cli"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "assert_cmd",
- "clap",
- "clap-verbosity-flag",
- "env_logger",
- "predicates",
- "tokio",
- "tokio-stream",
- "tonic",
  "wait-timeout",
  "zkauth",
- "zkauth-client",
  "zkauth-protobuf",
  "zkauth-server",
 ]

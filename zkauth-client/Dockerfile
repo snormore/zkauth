@@ -1,7 +1,7 @@
 FROM rust:1.76 as builder
 WORKDIR /code
 COPY . .
-RUN cargo install --path zkauth-demo-cli
+RUN cargo install --path zkauth-client
 
 FROM debian:stable-slim
 RUN export DEBIAN_FRONTEND=noninteractive && \
@@ -9,9 +9,9 @@ RUN export DEBIAN_FRONTEND=noninteractive && \
     apt install -y -q --no-install-recommends ca-certificates apt-transport-https && \
     apt clean && \
     rm -rf /var/lib/apt/lists/*
-COPY --from=builder /usr/local/cargo/bin/zkauth-demo-cli /usr/local/bin/zkauth-demo-cli
+COPY --from=builder /usr/local/cargo/bin/zkauth-client /usr/local/bin/zkauth-client
 RUN useradd -s /dev/null none
 ENV USER=none
 USER none
-ENTRYPOINT [ "zkauth-demo-cli" ]
+ENTRYPOINT [ "zkauth-client" ]
 CMD [ "--help" ]

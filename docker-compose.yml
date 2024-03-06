@@ -11,9 +11,9 @@ services:
       - "50001:5000"
     restart: always
 
-  cli:
+  client:
     build:
-      dockerfile: zkauth-demo-cli/Dockerfile
+      dockerfile: zkauth-client/Dockerfile
     environment:
       - ZKAUTH_ADDRESS=http://server:5000
     restart: "no"

@@ -7,7 +7,7 @@ mod main {
 
     #[test]
     fn no_server_fails() -> Result<(), Box<dyn std::error::Error>> {
-        let mut cmd = Command::cargo_bin("zkauth-demo-cli")?;
+        let mut cmd = Command::cargo_bin("zkauth-client")?;
 
         cmd.arg("--address")
             .arg("http://127.0.0.1:567812")

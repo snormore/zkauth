@@ -9,7 +9,10 @@ edition = "2021"
 zkauth-protobuf = { path = "../zkauth-protobuf", features = ["full"] }
 zkauth = { path = "../zkauth" }
 anyhow = "1.0.80"
+clap = { version = "4.5.1", features = ["env", "derive"] }
+clap-verbosity-flag = "2.2.0"
 log = "0.4.21"
+env_logger = "0.11.2"
 num-bigint = { version = "0.4.4", features = ["rand"] }
 num-traits = "0.2.18"
 rand = "0.8.5"
@@ -19,4 +22,9 @@ tonic = "0.11.0"
 curve25519-dalek = { version = "4.1.2", features = ["digest", "rand_core"] }
 
 [dev-dependencies]
+zkauth-server = { path = "../zkauth-server" }
 tower = "0.4.13"
+tonic = "0.11.0"
+assert_cmd = "2.0.14"
+predicates = "3.1.0"
+wait-timeout = "0.2.0"
