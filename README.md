@@ -267,7 +267,7 @@ Use the local CLI against the server on EKS via LB:
 
 ```sh
 cd zkauth-demo-cli
-cargo run -- --address http://$(kubectl get svc zkauth-server -o jsonpath='{.status.loadBalancer.ingress[0].hostname}') --user user --password password --register --login
+cargo run -- --address http://$(kubectl get svc zkauth-server -o jsonpath='{.status.loadBalancer.ingress[0].hostname}'):5000 --user user --password password --register --login
 ```
 
 Tear down the EKS cluster if no longer needed:
