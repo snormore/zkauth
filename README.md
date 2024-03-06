@@ -19,8 +19,7 @@ This repository provides a Rust library implementing the [Chaum-Pedersen protoco
 - [`zkauth`](./zkauth): Core library implementing the [`discrete_logarithm`](./zkauth/src/discrete_logarithm) and [`elliptic_curve`](./zkauth/src/elliptic_curve) flavors of the protocol.
 - [`zkauth-protobuf`](./zkauth-protobuf): Generated protobuf types and stubs for the gRPC service.
 - [`zkauth-server`](./zkauth-server): Implementation of the gRPC service, acting as the verifier in the Chaum-Pedersen protocol. Includes a CLI entrypoint used for execution of the server.
-- [`zkauth-client`](./zkauth-client): Implementation of the gRPC service client, acting as the prover in the Chaum-Pedersen protocol.
-- [`zkauth-demo-cli`](./zkauth-demo-cli): A simple CLI for interacting with the server as the client.
+- [`zkauth-client`](./zkauth-client): Implementation of the gRPC service client, acting as the prover in the Chaum-Pedersen protocol. Includes a CLI entrypoint that used for interacting with the server as a client.
 - [`tests`](./zkauth): A suite of functional tests that encode the expectations of the client/prover and server/verifier in an end-to-end way.
 
 ## User Workflows
@@ -173,13 +172,13 @@ zkauth-server --config-generate --config-path=config.json --config-prime-bits=25
 zkauth-server --config-generate --config-path=config.json --config-prime=42765216643065397982265462252423826320512529931694366715111734768493812630447
 ```
 
-#### Demo Client CLI
+#### Client
 
 ```
-$ cd zkauth-demo-cli
+$ cd zkauth-client
 $ cargo run -- --help
 
-Usage: zkauth-demo-cli [OPTIONS] --address <ADDRESS> --user <USER> --password <PASSWORD>
+Usage: zkauth-client [OPTIONS] --address <ADDRESS> --user <USER> --password <PASSWORD>
 
 Options:
   -v, --verbose...           Increase logging verbosity
@@ -201,7 +200,7 @@ cargo run -- --address http://localhost:50001 --user user --password password --
 
 ### Local docker-compose
 
-Build and spin up the docker containers for the server and demo CLI:
+Build and spin up the docker containers for the server and client:
 
 ```sh
 docker-compose up -d
@@ -219,10 +218,10 @@ View the logs:
 docker-compose logs -f
 ```
 
-Run the demo client CLI with arguments:
+Run the client with arguments:
 
 ```sh
-docker-compose run --rm cli --user user --password password --register --login
+docker-compose run --rm client --user user --password password --register --login
 ```
 
 If you need to rebuild the containers after changing the code, you can run
@@ -246,24 +245,24 @@ Spin up an EKS cluster:
 dev/eks-up
 ```
 
-Deploy the server and demo CLI:
+Deploy the server and client:
 
 ```sh
 dev/k8s-deploy
 ```
 
-Exec into the demo CLI container and `zkauth-demo-cli`:
+Exec into the client container and `zkauth-client`:
 
 ```sh
-dev/k8s-exec-cli
+dev/k8s-exec-client
 
-zkauth-demo-cli --user user --password password --register --login
+zkauth-client --user user --password password --register --login
 ```
 
 Use the local CLI against the server on EKS via LB:
 
 ```sh
-cd zkauth-demo-cli
+cd zkauth-client
 cargo run -- --address http://$(kubectl get svc zkauth-server -o jsonpath='{.status.loadBalancer.ingress[0].hostname}'):5000 --user user --password password --register --login
 ```
 

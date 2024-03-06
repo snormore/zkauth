@@ -9,7 +9,7 @@
 //! # Usage
 //!
 //! ```sh
-//! zkauth-demo-cli --address http://localhost:5001 --user user --password password --register --login
+//! zkauth-client --address http://localhost:5001 --user user --password password --register --login
 //! ```
 //!
 //! This command will register and login the user `user` with the password `password` using the
@@ -19,7 +19,7 @@ use anyhow::Result;
 use clap::Parser;
 use clap_verbosity_flag::{InfoLevel, Verbosity};
 use env_logger::Env;
-use zkauth_demo_cli::run;
+use zkauth_client::cli::run;
 
 /// The command-line options for the zkauth client.
 #[derive(Parser, Debug)]

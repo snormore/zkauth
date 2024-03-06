@@ -6,14 +6,14 @@
 //! # Usage
 //!
 //! ```sh
-//! zkauth-demo-cli --address http://localhost:5001 --user user --password password --register --login
+//! zkauth-client --address http://localhost:5001 --user user --password password --register --login
 //! ```
 //!
 //! This command will register and login the user `user` with the password `password` using the
 //! zkauth protocol at the address `http://localhost:5001`.
 
+use crate::{client::Client, AuthClient};
 use anyhow::Result;
-use zkauth_client::{client::Client, AuthClient};
 
 /// Runs the zkauth client.
 pub async fn run(

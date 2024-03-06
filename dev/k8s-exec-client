@@ -3,4 +3,4 @@ set -eou pipefail
 
 which ! kubeclt &>/dev/null && echo "kubectl is not installed" && exit 1
 
-kubectl exec --stdin --tty zkauth-demo-cli -- bash
+kubectl exec --stdin --tty zkauth-client -- bash
