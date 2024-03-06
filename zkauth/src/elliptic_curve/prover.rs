@@ -62,17 +62,21 @@ impl EllipticCurveProver {
     }
 }
 
+/// Implementation of the prover trait for the elliptic curve prover.
 impl Prover for EllipticCurveProver {
+    /// Generates a random x value for registration.
     fn generate_registration_x(&self) -> Scalar {
         let x = self.generate_x();
         x.into()
     }
 
+    /// Computes x from the given password for registration.
     fn compute_registration_x(&self, password: String) -> Scalar {
         let x = self.compute_x(password);
         x.into()
     }
 
+    /// Computes y1 and y2 from the given x for registration.
     fn compute_registration_y1y2(&self, x: Scalar) -> Result<(Element, Element)> {
         let x: DalekScalar = x
             .try_into()
@@ -82,11 +86,13 @@ impl Prover for EllipticCurveProver {
         Ok((y1.into(), y2.into()))
     }
 
+    /// Generates a random k value for challenge.
     fn generate_challenge_k(&self) -> Scalar {
         let c = self.generate_k();
         c.into()
     }
 
+    /// Computes r1 and r2 from the given k for challenge.
     fn compute_challenge_commitment_r1r2(&self, k: Scalar) -> Result<(Element, Element)> {
         let k: DalekScalar = k
             .try_into()
@@ -96,6 +102,7 @@ impl Prover for EllipticCurveProver {
         Ok((r1.into(), r2.into()))
     }
 
+    /// Computes s from the given x, k, and c for challenge response.
     fn compute_challenge_response_s(&self, x: Scalar, k: Scalar, c: Scalar) -> Result<Scalar> {
         let x = x
             .try_into()
