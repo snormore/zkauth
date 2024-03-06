@@ -47,6 +47,7 @@
 //! zkauth-server --config-generate --config-path=config.json --config-prime=42765216643065397982265462252423826320512529931694366715111734768493812630447
 //! ```
 
+pub mod cli;
 pub mod service;
 
 mod store;

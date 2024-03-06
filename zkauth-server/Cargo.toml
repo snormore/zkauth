@@ -31,4 +31,5 @@ strum_macros = "0.26.1"
 
 [dev-dependencies]
 assert_cmd = "2.0.14"
+tempdir = "0.3.7"
 wait-timeout = "0.2.0"
