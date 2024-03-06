@@ -2,7 +2,9 @@
 
 This repository provides a Rust library implementing the [Chaum-Pedersen protocol](https://link.springer.com/content/pdf/10.1007/3-540-48071-4_7.pdf), enabling the creation of zero-knowledge proofs for cryptographic verification while ensuring privacy. The project implements two flavors of the Chaum-Pedersen cryptographic proofs; one using discrete logarithms and the other using elliptive curves. These mechanisms allow a prover to demonstrate knowledge of a secret corresponding to a public value without revealing the secret itself. The project also includes a gRPC server and client implementation for integration into applications that wish to utilize the protocol to register and authenticate users.
 
+![Tests](https://github.com/snormore/zkauth/actions/workflows/ci.yml/badge.svg)
 [![codecov](https://codecov.io/gh/snormore/zkauth/graph/badge.svg?token=JN2KIKA175)](https://codecov.io/gh/snormore/zkauth)
+![Docs](https://github.com/snormore/zkauth/actions/workflows/github-pages.yml/badge.svg)
 
 [Docs](https://snormore.github.io/zkauth)
 
