@@ -1,11 +1,10 @@
 // Enforce documentation for all public items in the crate.
 #![warn(missing_docs)]
 
-//! This crate provides a set of tools for zero-knowledge proof authentication using
-//! Chaum-Pedersen zero-knowledge proofs. It implements two flavors of the Chaum-Pedersen
-//! cryptographic proofs; discrete logarithms and elliptive curves. These mechanisms allow a prover
-//! to demonstrate knowledge of a secret corresponding to a public value without revealing the
-//! secret itself.
+//! This crate provides a set of tools for authentication using Chaum-Pedersen zero-knowledge
+//! proofs. It implements two flavors of the Chaum-Pedersen cryptographic proofs; discrete
+//! logarithms and elliptive curves. These mechanisms allow a prover to demonstrate knowledge
+//! of a secret corresponding to a public value without revealing the secret itself.
 
 use anyhow::Result;
 use num_bigint::BigInt;
