@@ -6,3 +6,8 @@ ignore:
   - README.md
   - LICENSE
   - docker-compose.yml
+coverage:
+  status:
+    project:
+      default:
+        target: 85%
