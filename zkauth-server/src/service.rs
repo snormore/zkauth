@@ -1,6 +1,3 @@
-use dashmap::DashMap;
-use moka::sync::Cache;
-use std::time::Duration;
 use tonic::{Request, Response, Status};
 use uuid::Uuid;
 use zkauth::{Element, Scalar, Verifier};
@@ -10,35 +7,14 @@ use zkauth_protobuf::v1::{
     GetConfigurationRequest, RegisterRequest, RegisterResponse,
 };
 
-/// User data for the authentication protocol.
-#[derive(Debug)]
-struct User {
-    y1: Element,
-    y2: Element,
-}
-
-/// Challenge data for the authentication protocol.
-#[derive(Debug, Clone)]
-struct Challenge {
-    user: String,
-    c: Scalar,
-    r1: Element,
-    r2: Element,
-}
-
-/// Session data for the authentication protocol.
-#[derive(Debug, Clone, Copy)]
-struct Session {
-    id: Uuid,
-}
+use crate::store::memory::MemoryStore;
+use crate::store::{Challenge, Session, Store, User};
 
 /// Service for the authentication protocol.
 pub struct Service {
     verifier: Box<dyn Verifier>,
     configuration: Configuration,
-    users: DashMap<String, User>,
-    challenges: Cache<String, Challenge>,
-    sessions: Cache<String, Session>,
+    store: Box<dyn Store>,
 }
 
 impl Service {
@@ -47,13 +23,7 @@ impl Service {
         Self {
             configuration,
             verifier,
-            users: DashMap::new(),
-            challenges: Cache::builder()
-                .time_to_live(Duration::from_secs(300))
-                .build(),
-            sessions: Cache::builder()
-                .time_to_live(Duration::from_secs(3600))
-                .build(),
+            store: Box::<MemoryStore>::default(),
         }
     }
 }
@@ -94,11 +64,18 @@ impl Auth for Service {
             .parse()
             .map_err(|_| tonic::Status::invalid_argument("Invalid y2 argument"))?;
 
-        if self.users.get(&request.user).is_some() {
+        if self
+            .store
+            .get_user(&request.user)
+            .map_err(|_| Status::internal("Failed to get user"))?
+            .is_some()
+        {
             return Err(Status::already_exists("User already registered"));
         }
 
-        self.users.insert(request.user, User { y1, y2 });
+        self.store
+            .insert_user(&request.user, User { y1, y2 })
+            .map_err(|_| Status::internal("Failed to insert user into store"))?;
 
         Ok(Response::new(RegisterResponse {}))
     }
@@ -128,28 +105,31 @@ impl Auth for Service {
             .parse()
             .map_err(|_| tonic::Status::invalid_argument("Invalid r2 argument"))?;
 
-        if self.users.get(&request.user).is_none() {
-            return Err(Status::not_found("User not found"));
-        }
+        self.store
+            .get_user(&request.user)
+            .map_err(|_| Status::internal("Failed to get user"))?
+            .ok_or(Status::not_found("User not found"))?;
 
         // Generate random challenge number c.
         let c = self.verifier.generate_challenge_c();
         log::info!("c = {:?}", c);
 
         // Store (auth_id, (user, c)) for use in verify_authentication.
-        let auth_id = Uuid::new_v4().to_string();
-        self.challenges.insert(
-            auth_id.clone(),
-            Challenge {
-                user: request.user,
-                c: c.clone(),
-                r1,
-                r2,
-            },
-        );
+        let auth_id = Uuid::new_v4();
+        self.store
+            .insert_challenge(
+                auth_id,
+                Challenge {
+                    user: request.user,
+                    c: c.clone(),
+                    r1,
+                    r2,
+                },
+            )
+            .map_err(|_| Status::internal("Failed to insert challenge into store"))?;
 
         Ok(Response::new(AuthenticationChallengeResponse {
-            auth_id,
+            auth_id: auth_id.to_string(),
             c: c.to_string(),
         }))
     }
@@ -177,14 +157,19 @@ impl Auth for Service {
             return Err(Status::invalid_argument("Invalid auth_id argument"));
         }
 
+        let challenge_id = Uuid::parse_str(&request.auth_id)
+            .map_err(|_| Status::invalid_argument("Invalid auth_id argument"))?;
+
         let challenge = self
-            .challenges
-            .get(&request.auth_id)
+            .store
+            .get_challenge(challenge_id)
+            .map_err(|_| Status::internal("Failed to get challenge"))?
             .ok_or_else(|| Status::not_found("Challenge not found"))?;
 
         let user = self
-            .users
-            .get(&challenge.user)
+            .store
+            .get_user(&challenge.user)
+            .map_err(|_| Status::internal("Failed to get user"))?
             .ok_or_else(|| Status::not_found("User not found"))?;
 
         // Verify and return error if not correct.
@@ -198,10 +183,16 @@ impl Auth for Service {
         }
 
         let session_key = s.to_string();
-        let session = match self.sessions.get(&session_key) {
+        let session = match self
+            .store
+            .get_session(&session_key)
+            .map_err(|_| Status::internal("Failed to get session"))?
+        {
             None => {
                 let session = Session { id: Uuid::new_v4() };
-                self.sessions.insert(session_key, session);
+                self.store
+                    .insert_session(&session_key, session)
+                    .map_err(|_| Status::internal("Failed to insert session into store"))?;
                 session
             }
             Some(session) => session,
@@ -261,8 +252,8 @@ mod test {
         /// Tests that the register method succeeds with valid arguments.
         #[tokio::test]
         async fn succeeds() -> Result<()> {
-            let verifier = test_service();
-            let resp = verifier
+            let service = test_service();
+            let resp = service
                 .register(Request::new(RegisterRequest {
                     user: "peggy".to_string(),
                     y1: "1".to_string(),
@@ -279,16 +270,19 @@ mod test {
         /// Tests that the register method returns an error when the user is already registered.
         #[tokio::test]
         async fn returns_error_when_user_already_registered() -> Result<()> {
-            let verifier = test_service();
-            verifier.users.insert(
-                "peggy".to_string(),
-                User {
-                    y1: One::one(),
-                    y2: One::one(),
-                },
-            );
+            let service = test_service();
+            service
+                .store
+                .insert_user(
+                    "peggy",
+                    User {
+                        y1: One::one(),
+                        y2: One::one(),
+                    },
+                )
+                .map_err(|_| Status::internal("Failed to insert user into store"))?;
 
-            let result = verifier
+            let result = service
                 .register(Request::new(RegisterRequest {
                     user: "peggy".to_string(),
                     y1: "1".to_string(),
@@ -306,8 +300,8 @@ mod test {
         /// Tests that the register method returns an error when the user is empty.
         #[tokio::test]
         async fn returns_error_when_user_is_empty() -> Result<()> {
-            let verifier = test_service();
-            let result = verifier
+            let service = test_service();
+            let result = service
                 .register(Request::new(RegisterRequest {
                     user: "".to_string(),
                     y1: "1".to_string(),
@@ -325,8 +319,8 @@ mod test {
         /// Tests that the register method returns an error when y1 is empty.
         #[tokio::test]
         async fn returns_error_when_y1_is_empty() -> Result<()> {
-            let verifier = test_service();
-            let result = verifier
+            let service = test_service();
+            let result = service
                 .register(Request::new(RegisterRequest {
                     user: "peggy".to_string(),
                     y1: "".to_string(),
@@ -344,8 +338,8 @@ mod test {
         /// Tests that the register method returns an error when y2 is empty.
         #[tokio::test]
         async fn returns_error_when_y2_is_empty() -> Result<()> {
-            let verifier = test_service();
-            let result = verifier
+            let service = test_service();
+            let result = service
                 .register(Request::new(RegisterRequest {
                     user: "peggy".to_string(),
                     y1: "1".to_string(),
@@ -363,8 +357,8 @@ mod test {
         /// Tests that the register method returns an error when y1 is not a number.
         #[tokio::test]
         async fn returns_error_when_y1_is_not_a_number() -> Result<()> {
-            let verifier = test_service();
-            let result = verifier
+            let service = test_service();
+            let result = service
                 .register(Request::new(RegisterRequest {
                     user: "peggy".to_string(),
                     y1: "not-a-number".to_string(),
@@ -382,8 +376,8 @@ mod test {
         /// Tests that the register method returns an error when y2 is not a number.
         #[tokio::test]
         async fn returns_error_when_y2_is_not_a_number() -> Result<()> {
-            let verifier = test_service();
-            let result = verifier
+            let service = test_service();
+            let result = service
                 .register(Request::new(RegisterRequest {
                     user: "peggy".to_string(),
                     y1: "1".to_string(),
@@ -406,16 +400,19 @@ mod test {
         /// Tests that the create_authentication_challenge method succeeds with valid arguments.
         #[tokio::test]
         async fn succeeds() -> Result<()> {
-            let verifier = test_service();
-            verifier.users.insert(
-                "peggy".to_string(),
-                User {
-                    y1: One::one(),
-                    y2: One::one(),
-                },
-            );
+            let service = test_service();
+            service
+                .store
+                .insert_user(
+                    "peggy",
+                    User {
+                        y1: One::one(),
+                        y2: One::one(),
+                    },
+                )
+                .map_err(|_| Status::internal("Failed to insert user into store"))?;
 
-            let resp = verifier
+            let resp = service
                 .create_authentication_challenge(Request::new(AuthenticationChallengeRequest {
                     user: "peggy".to_string(),
                     r1: "1".to_string(),
@@ -433,8 +430,8 @@ mod test {
         /// Tests that the create_authentication_challenge method returns an error when the user is
         #[tokio::test]
         async fn returns_not_found_when_unknown_user() -> Result<()> {
-            let verifier = test_service();
-            let result = verifier
+            let service = test_service();
+            let result = service
                 .create_authentication_challenge(Request::new(AuthenticationChallengeRequest {
                     user: "unknown".to_string(),
                     r1: "1".to_string(),
@@ -452,8 +449,8 @@ mod test {
         /// Tests that the create_authentication_challenge method returns an error when the user is empty.
         #[tokio::test]
         async fn returns_error_when_user_is_empty() -> Result<()> {
-            let verifier = test_service();
-            let result = verifier
+            let service = test_service();
+            let result = service
                 .create_authentication_challenge(Request::new(AuthenticationChallengeRequest {
                     user: "".to_string(),
                     r1: "1".to_string(),
@@ -471,8 +468,8 @@ mod test {
         /// Tests that the create_authentication_challenge method returns an error when r1 is empty.
         #[tokio::test]
         async fn returns_error_when_r1_is_empty() -> Result<()> {
-            let verifier = test_service();
-            let result = verifier
+            let service = test_service();
+            let result = service
                 .create_authentication_challenge(Request::new(AuthenticationChallengeRequest {
                     user: "peggy".to_string(),
                     r1: "".to_string(),
@@ -490,8 +487,8 @@ mod test {
         /// Tests that the create_authentication_challenge method returns an error when r2 is empty.
         #[tokio::test]
         async fn returns_error_when_r2_is_empty() -> Result<()> {
-            let verifier = test_service();
-            let result = verifier
+            let service = test_service();
+            let result = service
                 .create_authentication_challenge(Request::new(AuthenticationChallengeRequest {
                     user: "peggy".to_string(),
                     r1: "1".to_string(),
@@ -509,8 +506,8 @@ mod test {
         /// Tests that the create_authentication_challenge method returns an error when r1 is not a number.
         #[tokio::test]
         async fn returns_error_when_r1_is_not_a_number() -> Result<()> {
-            let verifier = test_service();
-            let result = verifier
+            let service = test_service();
+            let result = service
                 .create_authentication_challenge(Request::new(AuthenticationChallengeRequest {
                     user: "peggy".to_string(),
                     r1: "not-a-number".to_string(),
@@ -528,8 +525,8 @@ mod test {
         /// Tests that the create_authentication_challenge method returns an error when r2 is not a number.
         #[tokio::test]
         async fn returns_error_when_r2_is_not_a_number() -> Result<()> {
-            let verifier = test_service();
-            let result = verifier
+            let service = test_service();
+            let result = service
                 .create_authentication_challenge(Request::new(AuthenticationChallengeRequest {
                     user: "peggy".to_string(),
                     r1: "1".to_string(),
@@ -560,8 +557,8 @@ mod test {
 
             let prover = DiscreteLogarithmProver::new(config);
 
-            let user = "peggy".to_string();
-            let auth_id = Uuid::new_v4().to_string();
+            let user = "peggy";
+            let auth_id = Uuid::new_v4();
 
             let x = prover.generate_registration_x();
             let (y1, y2) = prover.compute_registration_y1y2(x.clone())?;
@@ -572,14 +569,26 @@ mod test {
                 .compute_challenge_response_s(x, k, c.clone())
                 .unwrap();
 
-            service.users.insert(user.clone(), User { y1, y2 });
             service
-                .challenges
-                .insert(auth_id.clone(), Challenge { user, c, r1, r2 });
+                .store
+                .insert_user(user, User { y1, y2 })
+                .map_err(|_| Status::internal("Failed to insert user into store"))?;
+            service
+                .store
+                .insert_challenge(
+                    auth_id,
+                    Challenge {
+                        user: user.to_string(),
+                        c,
+                        r1,
+                        r2,
+                    },
+                )
+                .map_err(|_| Status::internal("Failed to insert challenge into store"))?;
 
             let resp = service
                 .verify_authentication(Request::new(AuthenticationAnswerRequest {
-                    auth_id: auth_id.clone(),
+                    auth_id: auth_id.to_string(),
                     s: s.to_string(),
                 }))
                 .await?
@@ -590,7 +599,7 @@ mod test {
 
             let resp = service
                 .verify_authentication(Request::new(AuthenticationAnswerRequest {
-                    auth_id,
+                    auth_id: auth_id.to_string(),
                     s: s.to_string(),
                 }))
                 .await?
@@ -604,10 +613,10 @@ mod test {
         /// Tests that the verify_authentication method returns an error when the challenge is not found.
         #[tokio::test]
         async fn returns_not_found_when_unknown_challenge() -> Result<()> {
-            let verifier = test_service();
-            let result = verifier
+            let service = test_service();
+            let result = service
                 .verify_authentication(Request::new(AuthenticationAnswerRequest {
-                    auth_id: "unknown".to_string(),
+                    auth_id: Uuid::new_v4().to_string(),
                     s: "1".to_string(),
                 }))
                 .await;
@@ -619,23 +628,45 @@ mod test {
             Ok(())
         }
 
+        /// Tests that the verify_authentication method returns an error when the auth_id is not a UUID.
+        #[tokio::test]
+        async fn returns_invalid_argument_when_auth_id_is_not_a_uuid() -> Result<()> {
+            let service = test_service();
+            let result = service
+                .verify_authentication(Request::new(AuthenticationAnswerRequest {
+                    auth_id: "not-a-uuid".to_string(),
+                    s: "1".to_string(),
+                }))
+                .await;
+
+            let err = result.unwrap_err();
+            assert_eq!(err.code(), Code::InvalidArgument);
+            assert_eq!(err.message(), "Invalid auth_id argument");
+
+            Ok(())
+        }
+
         /// Tests that the verify_authentication method returns an error when the user is not found.
         #[tokio::test]
         async fn returns_not_found_when_unknown_user() -> Result<()> {
-            let verifier = test_service();
-            verifier.challenges.insert(
-                "id".to_string(),
-                Challenge {
-                    user: "unknown".to_string(),
-                    c: One::one(),
-                    r1: One::one(),
-                    r2: One::one(),
-                },
-            );
+            let service = test_service();
+            let id = Uuid::new_v4();
+            service
+                .store
+                .insert_challenge(
+                    id,
+                    Challenge {
+                        user: "unknown".to_string(),
+                        c: One::one(),
+                        r1: One::one(),
+                        r2: One::one(),
+                    },
+                )
+                .map_err(|_| Status::internal("Failed to insert challenge into store"))?;
 
-            let result = verifier
+            let result = service
                 .verify_authentication(Request::new(AuthenticationAnswerRequest {
-                    auth_id: "id".to_string(),
+                    auth_id: id.to_string(),
                     s: "1".to_string(),
                 }))
                 .await;
@@ -650,8 +681,8 @@ mod test {
         /// Tests that the verify_authentication method returns an error when the auth_id is empty.
         #[tokio::test]
         async fn returns_error_when_auth_id_is_empty() -> Result<()> {
-            let verifier = test_service();
-            let result = verifier
+            let service = test_service();
+            let result = service
                 .verify_authentication(Request::new(AuthenticationAnswerRequest {
                     auth_id: "".to_string(),
                     s: "1".to_string(),
@@ -668,8 +699,8 @@ mod test {
         /// Tests that the verify_authentication method returns an error when r1 is empty.
         #[tokio::test]
         async fn returns_error_when_r1_is_empty() -> Result<()> {
-            let verifier = test_service();
-            let result = verifier
+            let service = test_service();
+            let result = service
                 .verify_authentication(Request::new(AuthenticationAnswerRequest {
                     auth_id: "".to_string(),
                     s: "".to_string(),
@@ -686,8 +717,8 @@ mod test {
         /// Tests that the verify_authentication method returns an error when r1 is not a number.
         #[tokio::test]
         async fn returns_error_when_r1_is_not_a_number() -> Result<()> {
-            let verifier = test_service();
-            let result = verifier
+            let service = test_service();
+            let result = service
                 .verify_authentication(Request::new(AuthenticationAnswerRequest {
                     auth_id: "".to_string(),
                     s: "not-a-number".to_string(),
@@ -704,28 +735,35 @@ mod test {
         /// Tests that the verify_authentication method returns an error when the verification fails.
         #[tokio::test]
         async fn returns_verification_failed() -> Result<()> {
-            let verifier = test_service();
+            let service = test_service();
 
-            verifier.users.insert(
-                "peggy".to_string(),
-                User {
-                    y1: One::one(),
-                    y2: One::one(),
-                },
-            );
-            verifier.challenges.insert(
-                "id".to_string(),
-                Challenge {
-                    user: "peggy".to_string(),
-                    c: One::one(),
-                    r1: One::one(),
-                    r2: One::one(),
-                },
-            );
+            service
+                .store
+                .insert_user(
+                    "peggy",
+                    User {
+                        y1: One::one(),
+                        y2: One::one(),
+                    },
+                )
+                .map_err(|_| Status::internal("Failed to insert user into store"))?;
+            let id = Uuid::new_v4();
+            service
+                .store
+                .insert_challenge(
+                    id,
+                    Challenge {
+                        user: "peggy".to_string(),
+                        c: One::one(),
+                        r1: One::one(),
+                        r2: One::one(),
+                    },
+                )
+                .map_err(|_| Status::internal("Failed to insert challenge into store"))?;
 
-            let result = verifier
+            let result = service
                 .verify_authentication(Request::new(AuthenticationAnswerRequest {
-                    auth_id: "id".to_string(),
+                    auth_id: id.to_string(),
                     s: "1".to_string(),
                 }))
                 .await;
