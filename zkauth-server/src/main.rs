@@ -108,7 +108,7 @@ pub struct Options {
     config_flavor: ConfigFlavor,
 
     /// Specifies the number of bits to use for generating prime numbers for the public parameters.
-    #[arg(long, default_value_t = 256)]
+    #[arg(long, default_value_t = 64)]
     config_prime_bits: usize,
 
     /// Specifies a prime number to use for generating the configuration.
@@ -298,7 +298,7 @@ mod options {
         let opts = Options::parse_from(vec!["bin"]);
         assert_eq!(opts.port, 0);
         assert_eq!(opts.host, "127.0.0.1");
-        assert_eq!(opts.config_prime_bits, 256);
+        assert_eq!(opts.config_prime_bits, 64);
         Ok(())
     }
 
