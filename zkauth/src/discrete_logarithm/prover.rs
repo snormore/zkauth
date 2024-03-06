@@ -178,6 +178,6 @@ mod tests {
         let s = prover
             .compute_challenge_response_s(x.into(), k.into(), c.into())
             .unwrap();
-        assert!(s > Scalar::zero());
+        assert!(s >= Scalar::zero() && s < prover.config.q.into());
     }
 }
