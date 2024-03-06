@@ -251,7 +251,7 @@ Deploy the server and client:
 dev/k8s-deploy
 ```
 
-Exec into the client container and `zkauth-client`:
+Exec into the client container and use the `zkauth-client` CLI:
 
 ```sh
 dev/k8s-exec-client
