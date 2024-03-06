@@ -5,14 +5,14 @@ use uuid::Uuid;
 use zkauth::{Element, Scalar};
 
 /// User data for the authentication protocol.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct User {
     pub y1: Element,
     pub y2: Element,
 }
 
 /// Challenge data for the authentication protocol.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Challenge {
     pub user: String,
     pub c: Scalar,
@@ -21,7 +21,7 @@ pub struct Challenge {
 }
 
 /// Session data for the authentication protocol.
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Session {
     pub id: Uuid,
 }

@@ -65,3 +65,46 @@ impl Store for MemoryStore {
         Ok(self.sessions.get(&id.to_string()))
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use num_traits::One;
+    use zkauth::{Element, Scalar};
+
+    #[test]
+    fn test_insert_get_user() {
+        let store = MemoryStore::default();
+        let user = User {
+            y1: Element::one(),
+            y2: Element::one(),
+        };
+        store.insert_user("test", user.clone()).unwrap();
+        assert_eq!(store.get_user("test").unwrap().unwrap(), user);
+        assert!(store.get_user("test2").unwrap().is_none());
+    }
+
+    #[test]
+    fn test_insert_get_challenge() {
+        let store = MemoryStore::default();
+        let challenge = Challenge {
+            user: "test".to_string(),
+            c: Scalar::one(),
+            r1: Element::one(),
+            r2: Element::one(),
+        };
+        let id = Uuid::new_v4();
+        store.insert_challenge(id, challenge.clone()).unwrap();
+        assert_eq!(store.get_challenge(id).unwrap().unwrap(), challenge);
+        assert!(store.get_challenge(Uuid::new_v4()).unwrap().is_none());
+    }
+
+    #[test]
+    fn test_insert_get_session() {
+        let store = MemoryStore::default();
+        let session = Session { id: Uuid::new_v4() };
+        store.insert_session("test", session.clone()).unwrap();
+        assert_eq!(store.get_session("test").unwrap().unwrap(), session);
+        assert!(store.get_session("test2").unwrap().is_none());
+    }
+}
