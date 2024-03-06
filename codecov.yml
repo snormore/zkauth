@@ -3,3 +3,6 @@ ignore:
   - ".github"
   - ".vscode"
   - "dev"
+  - README.md
+  - LICENSE
+  - docker-compose.yml
