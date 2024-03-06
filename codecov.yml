@@ -1,2 +1,5 @@
 ignore:
   - "zkauth-protobuf"
+  - ".github"
+  - ".vscode"
+  - "dev"
