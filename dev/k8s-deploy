@@ -1,0 +1,71 @@
+#!/bin/bash
+set -eou pipefail
+
+which ! docker &>/dev/null && echo "docker is not installed" && exit 1
+which ! kubeclt &>/dev/null && echo "kubectl is not installed" && exit 1
+
+CONTAINER_TAG="${CONTAINER_TAG:-dev2}"
+
+SERVER_CONTAINER_IMAGE="snormore/zkauth-server:${CONTAINER_TAG}"
+DEMO_CLI_CONTAINER_IMAGE="snormore/zkauth-demo-cli:${CONTAINER_TAG}"
+
+# Build and push the server and demo-cli container images.
+docker buildx build --platform linux/amd64 -f zkauth-server/Dockerfile -t "${SERVER_CONTAINER_IMAGE}" .
+docker buildx build --platform linux/amd64 -f zkauth-demo-cli/Dockerfile -t "${DEMO_CLI_CONTAINER_IMAGE}" .
+docker push "${SERVER_CONTAINER_IMAGE}"
+docker push "${DEMO_CLI_CONTAINER_IMAGE}"
+
+# Deploy server to the k8s cluster.
+kubectl apply -f - <<EOF
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: zkauth-server
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: zkauth-server
+  template:
+    metadata:
+      labels:
+        app: zkauth-server
+    spec:
+      containers:
+      - name: zkauth-server
+        image: ${SERVER_CONTAINER_IMAGE}
+        ports:
+        - containerPort: 5000
+EOF
+
+kubectl apply -f - <<EOF
+apiVersion: v1
+kind: Service
+metadata:
+  name: zkauth-server
+spec:
+  type: LoadBalancer
+  ports:
+    - port: 5000
+      targetPort: 5000
+  selector:
+    app: zkauth-server
+EOF
+
+# Deploy demo-cli to the k8s cluster.
+kubectl delete pod zkauth-demo-cli || true
+kubectl apply -f - <<EOF
+apiVersion: v1
+kind: Pod
+metadata:
+  name: zkauth-demo-cli
+spec:
+  restartPolicy: Never
+  containers:
+    - name: zkauth-demo-cli
+      image: "${DEMO_CLI_CONTAINER_IMAGE}"
+      command: ["sleep", "infinity"]
+      env:
+        - name: ZKAUTH_ADDRESS
+          value: "http://zkauth-server:5000"
+EOF

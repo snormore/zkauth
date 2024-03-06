@@ -241,6 +241,41 @@ or
 docker-compose up -d --build
 ```
 
+### AWS/EKS
+
+Spin up an EKS cluster:
+
+```sh
+dev/eks-up
+```
+
+Deploy the server and demo CLI:
+
+```sh
+dev/k8s-deploy
+```
+
+Exec into the demo CLI container and `zkauth-demo-cli`:
+
+```sh
+dev/k8s-exec-cli
+
+zkauth-demo-cli --user user --password password --register --login
+```
+
+Use the local CLI against the server on EKS via LB:
+
+```sh
+cd zkauth-demo-cli
+cargo run -- --address http://$(kubectl get svc zkauth-server -o jsonpath='{.status.loadBalancer.ingress[0].hostname}') --user user --password password --register --login
+```
+
+Tear down the EKS cluster if no longer needed:
+
+```sh
+dev/eks-down
+```
+
 ## License
 
 This project is licensed under the [MIT license](LICENSE).

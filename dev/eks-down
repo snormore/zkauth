@@ -1,0 +1,10 @@
+#!/bin/bash
+set -eou pipefail
+script_dir="$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
+set -a; source "${script_dir}/.env.default"; set +a
+
+which ! awscli &>/dev/null && echo "awscli is not installed" && exit 1
+which ! eksctl &>/dev/null && echo "eksctl is not installed" && exit 1
+
+eksctl delete cluster --name "${EKS_CLUSTER}" --region "${AWS_REGION}"
+
