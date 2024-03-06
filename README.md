@@ -11,11 +11,8 @@ This repository provides a Rust library implementing the [Chaum-Pedersen protoco
 - Chaum-Pedersen protocol-based gRPC authentication service.
 - Discrete logarithm flavor using BigInt via [num-bigint](https://github.com/rust-num/num-bigint).
 - Elliptic curve flavor using Ristretto points with [curve25519-dalek](https://github.com/dalek-cryptography/curve25519-dalek).
-- gRPC client/server for protocol operations.
-- Server and CLI client.
-- External user storage and challenge data cache.
-- Docker setup for local testing.
-- Terraform for AWS deployment.
+- gRPC server and client defined in protobufs.
+- Server and client CLIs.
 
 ## Project Layout
 
